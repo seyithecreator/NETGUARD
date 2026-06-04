@@ -1,0 +1,25 @@
+# Virtual environment - NEVER push this
+venv/
+env/
+.env/
+*.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Trained model files (large, regenerated on startup)
+models/*.pkl
+
+# Data (optional - if file is large, exclude it)
+# data/nslkdd.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
