@@ -8,70 +8,102 @@
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.26.0/plotly.min.js"></script>
 <style>
 :root{
-  --bg:#07090d;--bg2:#0c1018;--bg3:#111720;--bg4:#161f2a;
+  --bg:#07090d;--bg2:#0c1018;--bg3:#111720;
   --border:#1a2535;--border2:#233045;
   --text:#dce8f0;--muted:#4d6478;--dim:#1e2e3e;
   --accent:#00c9a7;--blue:#2196f3;--danger:#f44336;
   --warn:#ff9800;--probe:#9c6fe4;--r2l:#ff7043;--u2r:#e91e8c;--normal:#00c9a7;
   --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
-  --radius:6px;
+  --hdr:52px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;overflow:hidden}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px}
+body{overflow:hidden}
 
-/* ── Scanlines ── */
+/* scanlines */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px)}
 
-/* ── Shell ── */
-.shell{display:grid;grid-template-rows:48px 1fr;height:100vh}
+/* ══ SHELL ══════════════════════════════════════════════════════════════════ */
+.shell{display:flex;flex-direction:column;height:100dvh;height:100vh}
 
-/* ── Header ── */
-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;
-  background:var(--bg2);border-bottom:1px solid var(--border)}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:26px;height:26px;border:1.5px solid var(--accent);border-radius:4px;
-  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+/* ══ HEADER ═════════════════════════════════════════════════════════════════ */
+header{
+  height:var(--hdr);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;background:var(--bg2);border-bottom:1px solid var(--border);
+  gap:8px;
+}
+.logo{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo-icon{width:24px;height:24px;border:1.5px solid var(--accent);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0}
 .logo-icon::after{content:'';position:absolute;width:10px;height:10px;background:var(--accent);
   border-radius:50%;animation:pdot 2s ease-in-out infinite}
 @keyframes pdot{0%,100%{transform:scale(.55);opacity:.6}50%{transform:scale(1);opacity:1}}
-.logo-text{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.1em}
-.logo-sub{font-size:10px;color:var(--muted);letter-spacing:.04em;margin-top:1px}
-.header-center{display:flex;gap:6px}
-.nav-tab{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;
-  padding:5px 14px;border-radius:4px;border:1px solid var(--border2);background:transparent;
-  color:var(--muted);cursor:pointer;transition:all .15s}
+.logo-text{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;white-space:nowrap}
+.logo-sub{font-size:9px;color:var(--muted);margin-top:1px;white-space:nowrap}
+
+.header-center{display:flex;gap:4px}
+.nav-tab{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;
+  padding:5px 12px;border-radius:4px;border:1px solid var(--border2);background:transparent;
+  color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
 .nav-tab.active{background:var(--accent);color:#07090d;border-color:var(--accent)}
-.nav-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
-.header-right{display:flex;align-items:center;gap:14px}
-.live-pill{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.live-pill{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;
   color:var(--accent);background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.2);
-  padding:3px 10px;border-radius:3px}
+  padding:3px 8px;border-radius:3px;white-space:nowrap}
 .ldot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 1.1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-.model-sw{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:4px;padding:2px}
-.msw-btn{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 11px;
+.model-sw{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px}
+.msw-btn{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;
   border-radius:3px;border:none;background:transparent;color:var(--muted);cursor:pointer;
-  transition:all .15s;letter-spacing:.05em}
+  transition:all .15s;letter-spacing:.04em}
 .msw-btn.active{background:var(--blue);color:#fff}
-.hclock{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.hclock{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
 
-/* ── Body ── */
-.body{display:grid;grid-template-columns:200px 1fr;overflow:hidden}
+/* hide clock + live pill on very small screens */
+@media(max-width:480px){
+  .hclock{display:none}
+  .live-pill{display:none}
+  .logo-sub{display:none}
+}
 
-/* ── Sidebar ── */
-.sidebar{background:var(--bg2);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+/* ══ BODY ════════════════════════════════════════════════════════════════════ */
+.body{flex:1;display:flex;overflow:hidden;min-height:0}
+
+/* ══ SIDEBAR ═════════════════════════════════════════════════════════════════ */
+/* Desktop: fixed left column */
+.sidebar{
+  width:200px;flex-shrink:0;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+  transition:transform .25s ease;
+}
 .sidebar::-webkit-scrollbar{width:3px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--dim)}
+
+/* Mobile: sidebar becomes a slide-in drawer */
+@media(max-width:768px){
+  .sidebar{
+    position:fixed;top:var(--hdr);left:0;bottom:0;z-index:200;
+    transform:translateX(-100%);width:240px;
+    box-shadow:4px 0 24px rgba(0,0,0,.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{
+    display:none;position:fixed;inset:0;top:var(--hdr);z-index:199;
+    background:rgba(0,0,0,.5);
+  }
+  .sidebar-overlay.show{display:block}
+}
 
 .sb-section{padding:14px;border-bottom:1px solid var(--border)}
 .sb-label{font-family:var(--mono);font-size:9px;color:var(--muted);
   letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
 
 .counter-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ctr{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px}
+.ctr{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px}
 .ctr-lbl{font-size:9px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
 .ctr-val{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1}
 .ctr-full{grid-column:1/-1}
@@ -84,7 +116,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .atk-num{font-family:var(--mono);font-size:9px;color:var(--muted);width:22px;text-align:right}
 
 .filter-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-.fchip{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;
+.fchip{font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 8px;
   border-radius:3px;border:1px solid;cursor:pointer;transition:opacity .15s;
   letter-spacing:.03em;opacity:.32}
 .fchip.on{opacity:1}
@@ -101,51 +133,79 @@ header{display:flex;align-items:center;justify-content:space-between;padding:0 2
 .mini-track{height:3px;background:var(--dim);border-radius:2px;margin-top:2px;margin-bottom:6px}
 .mini-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .6s}
 
-/* ── Pages ── */
-.pages{overflow:hidden;display:flex;flex-direction:column}
-.page{display:none;flex-direction:column;height:100%;overflow:hidden}
+/* ── Hamburger button (mobile only) ── */
+.hamburger{
+  display:none;background:transparent;border:1px solid var(--border2);
+  border-radius:4px;padding:5px 8px;cursor:pointer;color:var(--muted);font-size:16px;
+  line-height:1;flex-shrink:0;
+}
+@media(max-width:768px){.hamburger{display:flex;align-items:center;justify-content:center}}
+
+/* ══ PAGES ════════════════════════════════════════════════════════════════════ */
+.pages{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.page{display:none;flex-direction:column;flex:1;overflow:hidden}
 .page.active{display:flex}
 
-/* ── LIVE PAGE ── */
-.metrics-strip{display:grid;grid-template-columns:repeat(5,1fr);
-  border-bottom:1px solid var(--border);flex-shrink:0}
-.mc{padding:10px 14px;border-right:1px solid var(--border);position:relative;overflow:hidden}
+/* ══ LIVE PAGE ════════════════════════════════════════════════════════════════ */
+
+/* Metrics strip — 5 cols desktop, 2×3 grid mobile */
+.metrics-strip{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+@media(max-width:600px){
+  .metrics-strip{grid-template-columns:repeat(3,1fr)}
+  .mc:nth-child(n+4){border-top:1px solid var(--border)}
+}
+.mc{padding:10px 12px;border-right:1px solid var(--border);position:relative;overflow:hidden}
 .mc:last-child{border-right:none}
 .mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--ac,var(--border))}
-.mc-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
-.mc-val{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1}
-.mc-sub{font-size:9px;color:var(--muted);margin-top:2px;min-height:13px}
+.mc-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.mc-val{font-family:var(--mono);font-size:16px;font-weight:700;line-height:1}
+.mc-sub{font-size:9px;color:var(--muted);margin-top:2px;min-height:12px}
 
-.table-bar{display:flex;align-items:center;justify-content:space-between;
-  padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
-.table-title{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-.tbar-right{display:flex;gap:8px;align-items:center}
-.search{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
-  padding:4px 10px;font-family:var(--mono);font-size:10px;color:var(--text);
-  outline:none;width:170px;transition:border-color .15s}
+/* Table bar */
+.table-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;border-bottom:1px solid var(--border);flex-shrink:0;gap:8px;flex-wrap:wrap;
+}
+.table-title{font-family:var(--mono);font-size:9px;color:var(--muted);
+  letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.tbar-right{display:flex;gap:6px;align-items:center}
+.search{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
+  padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--text);
+  outline:none;width:150px;transition:border-color .15s;
+}
 .search::placeholder{color:var(--muted)}
 .search:focus{border-color:var(--blue)}
-.pause-btn{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.06em;
-  padding:4px 12px;border-radius:3px;border:1px solid var(--border2);
-  background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s}
-.pause-btn:hover{border-color:var(--blue);color:var(--blue)}
+@media(max-width:480px){.search{width:110px}}
+.pause-btn{
+  font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.04em;
+  padding:5px 10px;border-radius:3px;border:1px solid var(--border2);
+  background:var(--bg3);color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
 .pause-btn.paused{border-color:var(--warn);color:var(--warn);background:rgba(255,152,0,.06)}
 
-.tscroll{flex:1;overflow-y:auto}
-.tscroll::-webkit-scrollbar{width:3px}
+/* Table scroll */
+.tscroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.tscroll::-webkit-scrollbar{width:3px;height:3px}
 .tscroll::-webkit-scrollbar-thumb{background:var(--dim)}
-table{width:100%;border-collapse:collapse}
-thead th{position:sticky;top:0;background:var(--bg3);
+
+table{width:100%;border-collapse:collapse;min-width:700px}
+thead th{
+  position:sticky;top:0;background:var(--bg3);
   font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.08em;padding:7px 10px;
-  text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-tbody tr{border-bottom:1px solid rgba(26,37,53,.7);transition:background .1s;
-  animation:rwin .25s ease-out both}
-@keyframes rwin{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+  text-transform:uppercase;letter-spacing:.07em;padding:7px 8px;
+  text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid rgba(26,37,53,.7);transition:background .1s;animation:rwin .25s ease-out both}
+@keyframes rwin{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
 tbody tr:hover{background:rgba(255,255,255,.02)}
-td{padding:6px 10px;font-size:11px;white-space:nowrap}
+td{padding:5px 8px;font-size:11px;white-space:nowrap}
 td.mono{font-family:var(--mono);font-size:10px}
 td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
+
 .badge{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;
   padding:2px 6px;border-radius:3px;border:1px solid;letter-spacing:.04em}
 .b-normal{color:var(--normal);border-color:rgba(0,201,167,.35);background:rgba(0,201,167,.07)}
@@ -153,48 +213,64 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
 .b-probe{color:var(--probe);border-color:rgba(156,111,228,.35);background:rgba(156,111,228,.07)}
 .b-r2l{color:var(--r2l);border-color:rgba(255,112,67,.35);background:rgba(255,112,67,.07)}
 .b-u2r{color:var(--u2r);border-color:rgba(233,30,140,.35);background:rgba(233,30,140,.07)}
-.b-correct{color:#888;border-color:rgba(100,200,100,.25);background:rgba(100,200,100,.05);font-size:8px}
-.b-wrong{color:#f88;border-color:rgba(255,100,100,.25);background:rgba(255,100,100,.05);font-size:8px}
+
 .conf-bar{display:flex;align-items:center;gap:5px}
-.cbar-track{width:44px;height:3px;background:var(--dim);border-radius:2px}
+.cbar-track{width:40px;height:3px;background:var(--dim);border-radius:2px}
 .cbar-fill{height:100%;border-radius:2px}
 .cbar-txt{font-family:var(--mono);font-size:9px;color:var(--muted)}
 
-/* ── ANALYTICS PAGE ── */
-.analytics-grid{flex:1;overflow-y:auto;display:grid;
-  grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;
-  gap:1px;background:var(--border)}
+/* Status bar */
+.statusbar{
+  padding:4px 12px;background:var(--bg2);border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-shrink:0;overflow:hidden;
+}
+.si{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap}
+.sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sdot-g{background:var(--accent)}.sdot-b{background:var(--blue)}.sdot-o{background:var(--warn)}
+@media(max-width:480px){
+  .si-hide{display:none}
+}
+
+/* ══ ANALYTICS PAGE ═══════════════════════════════════════════════════════════ */
+.analytics-grid{
+  flex:1;overflow-y:auto;
+  display:grid;gap:1px;background:var(--border);
+  grid-template-columns:1fr 1fr;
+}
 .analytics-grid::-webkit-scrollbar{width:3px}
 .analytics-grid::-webkit-scrollbar-thumb{background:var(--dim)}
-.chart-card{background:var(--bg2);padding:16px;min-height:280px;display:flex;flex-direction:column}
+
+/* stack to 1 column on mobile */
+@media(max-width:640px){
+  .analytics-grid{grid-template-columns:1fr}
+}
+
+.chart-card{background:var(--bg2);padding:14px;display:flex;flex-direction:column;min-height:260px}
 .chart-card.full{grid-column:1/-1}
 .chart-card-title{font-family:var(--mono);font-size:9px;color:var(--muted);
-  letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
-.plotly-chart{flex:1;min-height:220px}
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.plotly-chart{flex:1;min-height:200px}
 
-/* ── Per-class table ── */
-.pct{width:100%;border-collapse:collapse;margin-top:8px}
+/* Per-class table — scrollable on mobile */
+.pct-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
+.pct{width:100%;border-collapse:collapse;min-width:500px}
 .pct th{font-family:var(--mono);font-size:9px;color:var(--muted);padding:4px 8px;
   text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em}
 .pct td{font-family:var(--mono);font-size:10px;padding:5px 8px;border-bottom:1px solid rgba(26,37,53,.5)}
 .pct tr:hover td{background:rgba(255,255,255,.02)}
 
-/* ── Status bar ── */
-.statusbar{padding:4px 16px;background:var(--bg2);border-top:1px solid var(--border);
-  display:flex;align-items:center;gap:16px;flex-shrink:0}
-.si{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted)}
-.sdot{width:5px;height:5px;border-radius:50%}
-.sdot-g{background:var(--accent)} .sdot-b{background:var(--blue)} .sdot-o{background:var(--warn)}
-
-/* ── Training overlay ── */
-#overlay{position:fixed;inset:0;background:rgba(7,9,13,.95);z-index:1000;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+/* ══ TRAINING OVERLAY ════════════════════════════════════════════════════════ */
+#overlay{
+  position:fixed;inset:0;background:rgba(7,9,13,.95);z-index:1000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:20px;text-align:center;
+}
 #overlay.hidden{display:none}
 .spin{width:36px;height:36px;border:2px solid var(--border2);
   border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.overlay-msg{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.08em}
-.overlay-sub{font-size:10px;color:var(--muted)}
+.overlay-msg{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.08em}
+.overlay-sub{font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -206,17 +282,30 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
   <div class="overlay-sub">Decision Tree &amp; KNN on NSL-KDD dataset…</div>
 </div>
 
+<!-- Sidebar overlay (mobile tap-to-close) -->
+<div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
 <div class="shell">
+
   <!-- HEADER -->
   <header>
-    <div class="logo">
-      <div class="logo-icon"></div>
-      <div><div class="logo-text">NETGUARD·IDS</div><div class="logo-sub">Real-time Intrusion Detection</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <!-- Hamburger (mobile only) -->
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <div class="logo">
+        <div class="logo-icon"></div>
+        <div>
+          <div class="logo-text">NETGUARD·IDS</div>
+          <div class="logo-sub">Intrusion Detection</div>
+        </div>
+      </div>
     </div>
+
     <div class="header-center">
-      <button class="nav-tab active" onclick="showPage('live')">Live Monitor</button>
-      <button class="nav-tab" onclick="showPage('analytics')">Analytics</button>
+      <button class="nav-tab active" onclick="showPage('live',event)">Live</button>
+      <button class="nav-tab" onclick="showPage('analytics',event)">Analytics</button>
     </div>
+
     <div class="header-right">
       <div class="live-pill"><div class="ldot"></div>LIVE</div>
       <div class="model-sw">
@@ -229,8 +318,9 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
   </header>
 
   <div class="body">
+
     <!-- SIDEBAR -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="sb-section">
         <div class="sb-label">Live Counters</div>
         <div class="counter-grid">
@@ -273,45 +363,70 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
 
       <!-- ── LIVE PAGE ── -->
       <div class="page active" id="page-live">
+
+        <!-- Metrics strip (5 cards, wraps to 3+2 on mobile) -->
         <div class="metrics-strip">
-          <div class="mc" style="--ac:var(--blue)"><div class="mc-lbl">Packets/sec</div><div class="mc-val" id="m-pps" style="color:var(--blue)">0</div><div class="mc-sub" id="m-pps-d">&nbsp;</div></div>
-          <div class="mc" style="--ac:var(--normal)"><div class="mc-lbl">Accuracy</div><div class="mc-val" id="m-acc" style="color:var(--normal)">—</div><div class="mc-sub">&nbsp;</div></div>
-          <div class="mc" style="--ac:var(--probe)"><div class="mc-lbl">Precision</div><div class="mc-val" id="m-prec" style="color:var(--probe)">—</div><div class="mc-sub">&nbsp;</div></div>
-          <div class="mc" style="--ac:var(--r2l)"><div class="mc-lbl">Recall</div><div class="mc-val" id="m-rec" style="color:var(--r2l)">—</div><div class="mc-sub">&nbsp;</div></div>
-          <div class="mc" style="--ac:var(--danger)"><div class="mc-lbl">Alert Rate</div><div class="mc-val" id="m-alert" style="color:var(--danger)">0%</div><div class="mc-sub">&nbsp;</div></div>
+          <div class="mc" style="--ac:var(--blue)">
+            <div class="mc-lbl">Packets/sec</div>
+            <div class="mc-val" id="m-pps" style="color:var(--blue)">0</div>
+            <div class="mc-sub" id="m-pps-d">&nbsp;</div>
+          </div>
+          <div class="mc" style="--ac:var(--normal)">
+            <div class="mc-lbl">Accuracy</div>
+            <div class="mc-val" id="m-acc" style="color:var(--normal)">—</div>
+            <div class="mc-sub">&nbsp;</div>
+          </div>
+          <div class="mc" style="--ac:var(--probe)">
+            <div class="mc-lbl">Precision</div>
+            <div class="mc-val" id="m-prec" style="color:var(--probe)">—</div>
+            <div class="mc-sub">&nbsp;</div>
+          </div>
+          <div class="mc" style="--ac:var(--r2l)">
+            <div class="mc-lbl">Recall</div>
+            <div class="mc-val" id="m-rec" style="color:var(--r2l)">—</div>
+            <div class="mc-sub">&nbsp;</div>
+          </div>
+          <div class="mc" style="--ac:var(--danger)">
+            <div class="mc-lbl">Alert Rate</div>
+            <div class="mc-val" id="m-alert" style="color:var(--danger)">0%</div>
+            <div class="mc-sub">&nbsp;</div>
+          </div>
         </div>
 
+        <!-- Table bar -->
         <div class="table-bar">
           <span class="table-title">Alert Log — <span id="row-count">0</span> entries</span>
           <div class="tbar-right">
-            <input class="search" id="search" placeholder="Search IP / type / service…" oninput="renderTable()"/>
+            <input class="search" id="search" placeholder="Search IP / type…" oninput="renderTable()"/>
             <button class="pause-btn" id="pbtn" onclick="togglePause()">⏸ PAUSE</button>
           </div>
         </div>
 
+        <!-- Scrollable table — min-width forces horizontal scroll on mobile -->
         <div class="tscroll">
           <table>
             <thead><tr>
-              <th>Timestamp</th><th>Src IP</th><th>Dst IP</th>
-              <th>Proto</th><th>Service</th><th>Src Bytes</th>
-              <th>Duration</th><th>Flag</th>
-              <th>Prediction</th><th>True Label</th><th>Model</th><th>Confidence</th>
+              <th>Time</th><th>Src IP</th><th>Dst IP</th>
+              <th>Proto</th><th>Service</th><th>Bytes</th>
+              <th>Dur</th><th>Flag</th>
+              <th>Prediction</th><th>True</th><th>Mdl</th><th>Conf</th>
             </tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
 
+        <!-- Status bar -->
         <div class="statusbar">
-          <div class="si"><div class="sdot sdot-g"></div>NSL-KDD loaded</div>
-          <div class="si"><div class="sdot sdot-b"></div>Model: <span id="st-model" style="color:var(--blue);margin-left:4px">DT</span></div>
-          <div class="si"><div class="sdot sdot-o"></div>KDDTest+ active</div>
-          <div class="si" style="margin-left:auto"><span id="st-uptime">Uptime: 00:00</span></div>
+          <div class="si"><div class="sdot sdot-g"></div>NSL-KDD</div>
+          <div class="si si-hide"><div class="sdot sdot-b"></div>Model: <span id="st-model" style="color:var(--blue);margin-left:3px">DT</span></div>
+          <div class="si si-hide"><div class="sdot sdot-o"></div>KDDTest+</div>
+          <div class="si" style="margin-left:auto"><span id="st-uptime">00:00</span></div>
         </div>
-      </div><!-- /live page -->
+      </div><!-- /live -->
 
       <!-- ── ANALYTICS PAGE ── -->
       <div class="page" id="page-analytics">
-        <div class="analytics-grid" id="analytics-grid">
+        <div class="analytics-grid">
 
           <div class="chart-card">
             <div class="chart-card-title">Confusion Matrix — Decision Tree</div>
@@ -335,37 +450,41 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
 
           <div class="chart-card full">
             <div class="chart-card-title">Per-Class Performance</div>
-            <div id="ch-perclass"></div>
+            <div class="pct-wrap" id="ch-perclass"></div>
           </div>
 
         </div>
-      </div><!-- /analytics page -->
+      </div><!-- /analytics -->
 
     </div><!-- /pages -->
   </div><!-- /body -->
 </div><!-- /shell -->
 
 <script>
-// ── State ────────────────────────────────────────────────────────────────────
-let rows = [], counters = {DoS:0,Probe:0,R2L:0,U2R:0,Normal:0};
+// ── State ─────────────────────────────────────────────────────────────────────
+let rows=[], counters={DoS:0,Probe:0,R2L:0,U2R:0,Normal:0};
 let total=0, atks=0, correct=0, paused=false, ready=false;
 let model='DT', filter='ALL', upSecs=0, ppsWin=0, prevPPS=0, tickN=0;
-let metricsData = null;
-let analyticsLoaded = false;
+let metricsData=null, analyticsLoaded=false;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 const $  = id => document.getElementById(id);
 const ts = () => { const d=new Date(); return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0'); };
 
-function badgeCls(t){
-  return {Normal:'b-normal',DoS:'b-dos',Probe:'b-probe',R2L:'b-r2l',U2R:'b-u2r'}[t]||'b-normal';
+function badgeCls(t){ return {Normal:'b-normal',DoS:'b-dos',Probe:'b-probe',R2L:'b-r2l',U2R:'b-u2r'}[t]||'b-normal'; }
+function confColor(c,t){ if(t==='Normal') return 'var(--normal)'; return c>=85?'var(--blue)':c>=65?'var(--warn)':'var(--danger)'; }
+
+// ── Sidebar drawer (mobile) ───────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=$('sidebar'), ov=$('sb-overlay');
+  const open = sb.classList.toggle('open');
+  ov.classList.toggle('show', open);
 }
-function confColor(c,t){
-  if(t==='Normal') return 'var(--normal)';
-  return c>=85?'var(--blue)':c>=65?'var(--warn)':'var(--danger)';
+function closeSidebar(){
+  $('sidebar').classList.remove('open');
+  $('sb-overlay').classList.remove('show');
 }
 
-// ── Poll training status ─────────────────────────────────────────────────────
+// ── Training poll ─────────────────────────────────────────────────────────────
 async function waitReady(){
   while(true){
     const r = await fetch('/api/status').then(x=>x.json()).catch(()=>({trained:false}));
@@ -373,25 +492,22 @@ async function waitReady(){
     await new Promise(r=>setTimeout(r,800));
   }
 }
-
 async function loadMetrics(){
   metricsData = await fetch('/api/metrics').then(x=>x.json());
-  updateSidebarPerf();
-  updateTopMetrics();
+  updateSidebarPerf(); updateTopMetrics();
 }
 
-// ── Feed ─────────────────────────────────────────────────────────────────────
-function startFeed(){ setInterval(feedTick, 300); }
-
+// ── Feed ──────────────────────────────────────────────────────────────────────
+function startFeed(){ setInterval(feedTick,300); }
 async function feedTick(){
   if(!ready||paused) return;
   const rec = await fetch(`/api/predict?model=${model}`).then(x=>x.json()).catch(()=>null);
   if(!rec||!rec.prediction) return;
-  rec.ts = ts();
+  rec.ts=ts();
   rows.unshift(rec);
   if(rows.length>600) rows.length=600;
   total++; ppsWin++;
-  if(rec.prediction!=='Normal') { atks++; counters[rec.prediction]=(counters[rec.prediction]||0)+1; }
+  if(rec.prediction!=='Normal'){ atks++; counters[rec.prediction]=(counters[rec.prediction]||0)+1; }
   else counters.Normal=(counters.Normal||0)+1;
   if(rec.correct) correct++;
   tickN++;
@@ -399,62 +515,58 @@ async function feedTick(){
   if(tickN%3===0) renderTable();
 }
 
-// ── PPS ticker ───────────────────────────────────────────────────────────────
+// ── PPS ───────────────────────────────────────────────────────────────────────
 setInterval(()=>{
-  $('m-pps').textContent = ppsWin;
-  const d = ppsWin-prevPPS;
-  const el = $('m-pps-d');
-  el.textContent = d>=0?`↑ +${d} vs prev`:`↓ ${d} vs prev`;
-  el.style.color = d>0?'var(--danger)':'var(--normal)';
+  $('m-pps').textContent=ppsWin;
+  const d=ppsWin-prevPPS;
+  const el=$('m-pps-d');
+  el.textContent=d>=0?`↑ +${d}`:`↓ ${d}`;
+  el.style.color=d>0?'var(--danger)':'var(--normal)';
   prevPPS=ppsWin; ppsWin=0;
 },1000);
 
-// ── Sidebar ──────────────────────────────────────────────────────────────────
+// ── Sidebar updates ───────────────────────────────────────────────────────────
 function updateSidebar(){
-  $('s-total').textContent = total.toLocaleString();
-  $('s-atk').textContent   = atks.toLocaleString();
-  $('s-norm').textContent  = (counters.Normal||0).toLocaleString();
-  $('s-acc').textContent   = metricsData ? metricsData[model==='BOTH'?'DT':model].accuracy+'%' : '—';
-  $('s-corr').textContent  = total>0 ? Math.round(correct/total*100)+'%' : '—';
-  const maxA = Math.max(...['DoS','Probe','R2L','U2R'].map(k=>counters[k]||0),1);
+  $('s-total').textContent=total.toLocaleString();
+  $('s-atk').textContent=atks.toLocaleString();
+  $('s-norm').textContent=(counters.Normal||0).toLocaleString();
+  $('s-acc').textContent=metricsData?metricsData[model==='BOTH'?'DT':model].accuracy+'%':'—';
+  $('s-corr').textContent=total>0?Math.round(correct/total*100)+'%':'—';
+  const maxA=Math.max(...['DoS','Probe','R2L','U2R'].map(k=>counters[k]||0),1);
   [['dos','DoS'],['probe','Probe'],['r2l','R2L'],['u2r','U2R']].forEach(([k,K])=>{
     const c=counters[K]||0;
     $(`ab-${k}`).style.width=Math.round(c/maxA*100)+'%';
     $(`an-${k}`).textContent=c;
   });
-  const ar = total>0?Math.round(atks/total*100):0;
-  $('m-alert').textContent = ar+'%';
+  $('m-alert').textContent=(total>0?Math.round(atks/total*100):0)+'%';
 }
-
 function updateSidebarPerf(){
   if(!metricsData) return;
-  const m = model==='BOTH'?'DT':model;
-  const d = metricsData[m];
-  $('sb-perf').innerHTML = ['Accuracy','Precision','Recall','F1'].map((k,i)=>{
-    const v = [d.accuracy,d.precision,d.recall,d.f1][i];
+  const m=model==='BOTH'?'DT':model, d=metricsData[m];
+  $('sb-perf').innerHTML=['Accuracy','Precision','Recall','F1'].map((k,i)=>{
+    const v=[d.accuracy,d.precision,d.recall,d.f1][i];
     return `<div class="perf-row"><span class="perf-k">${k}</span><span class="perf-v">${v}%</span></div>
             <div class="mini-track"><div class="mini-fill" style="width:${v}%"></div></div>`;
   }).join('');
 }
-
 function updateTopMetrics(){
   if(!metricsData) return;
-  const m = model==='BOTH'?'DT':model;
-  $('m-acc').textContent  = metricsData[m].accuracy+'%';
-  $('m-prec').textContent = metricsData[m].precision+'%';
-  $('m-rec').textContent  = metricsData[m].recall+'%';
+  const m=model==='BOTH'?'DT':model;
+  $('m-acc').textContent=metricsData[m].accuracy+'%';
+  $('m-prec').textContent=metricsData[m].precision+'%';
+  $('m-rec').textContent=metricsData[m].recall+'%';
 }
 
-// ── Table ────────────────────────────────────────────────────────────────────
+// ── Table ─────────────────────────────────────────────────────────────────────
 function renderTable(){
-  const q = $('search').value.toLowerCase();
-  const filtered = rows.filter(r=>{
-    if(filter!=='ALL' && r.prediction!==filter) return false;
-    if(q && !`${r.src_ip} ${r.dst_ip} ${r.prediction} ${r.service} ${r.protocol}`.toLowerCase().includes(q)) return false;
+  const q=$('search').value.toLowerCase();
+  const filtered=rows.filter(r=>{
+    if(filter!=='ALL'&&r.prediction!==filter) return false;
+    if(q&&!`${r.src_ip} ${r.dst_ip} ${r.prediction} ${r.service} ${r.protocol}`.toLowerCase().includes(q)) return false;
     return true;
   });
-  $('row-count').textContent = filtered.length.toLocaleString();
-  $('tbody').innerHTML = filtered.slice(0,250).map(r=>`
+  $('row-count').textContent=filtered.length.toLocaleString();
+  $('tbody').innerHTML=filtered.slice(0,250).map(r=>`
     <tr>
       <td class="mono">${r.ts}</td>
       <td class="ip">${r.src_ip}</td>
@@ -467,25 +579,20 @@ function renderTable(){
       <td><span class="badge ${badgeCls(r.prediction)}">${r.prediction}</span></td>
       <td><span class="badge ${badgeCls(r.true_label)}">${r.true_label}</span></td>
       <td class="mono" style="color:var(--muted)">${r.model}</td>
-      <td>
-        <div class="conf-bar">
-          <div class="cbar-track"><div class="cbar-fill" style="width:${r.confidence}%;background:${confColor(r.confidence,r.prediction)}"></div></div>
-          <span class="cbar-txt">${r.confidence}%</span>
-        </div>
-      </td>
+      <td><div class="conf-bar">
+        <div class="cbar-track"><div class="cbar-fill" style="width:${r.confidence}%;background:${confColor(r.confidence,r.prediction)}"></div></div>
+        <span class="cbar-txt">${r.confidence}%</span>
+      </div></td>
     </tr>`).join('');
 }
 
-// ── Controls ─────────────────────────────────────────────────────────────────
+// ── Controls ──────────────────────────────────────────────────────────────────
 function setModel(m){
   model=m;
-  ['DT','KNN','BOTH'].forEach(k=>{
-    $('mb-'+k.toLowerCase()).classList.toggle('active',k===m);
-  });
+  ['DT','KNN','BOTH'].forEach(k=>$('mb-'+k.toLowerCase()).classList.toggle('active',k===m));
   $('st-model').textContent=m;
   updateSidebarPerf(); updateTopMetrics();
 }
-
 function setFilter(f){
   filter=f;
   document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
@@ -493,143 +600,119 @@ function setFilter(f){
   document.querySelector('.'+map[f]).classList.add('on');
   renderTable();
 }
-
 function togglePause(){
   paused=!paused;
-  $('pbtn').textContent = paused?'▶ RESUME':'⏸ PAUSE';
+  $('pbtn').textContent=paused?'▶ RESUME':'⏸ PAUSE';
   $('pbtn').classList.toggle('paused',paused);
 }
-
-// ── Page nav ─────────────────────────────────────────────────────────────────
-function showPage(name){
+function showPage(name,ev){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   $('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  event.target.classList.add('active');
-  if(name==='analytics' && ready && !analyticsLoaded){ loadAnalytics(); }
+  if(ev) ev.target.classList.add('active');
+  if(name==='analytics'&&ready&&!analyticsLoaded) loadAnalytics();
+  closeSidebar();
 }
 
-// ── Analytics charts (Plotly) ─────────────────────────────────────────────────
-const PTHEME = {
-  paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+// ── Analytics ─────────────────────────────────────────────────────────────────
+const PTHEME={
+  paper_bgcolor:'transparent',plot_bgcolor:'transparent',
   font:{family:"'IBM Plex Mono',monospace",color:'#4d6478',size:10},
-  margin:{t:10,r:10,b:40,l:80},
   colorway:['#2196f3','#00c9a7','#f44336','#ff9800','#9c6fe4']
 };
-
 async function loadAnalytics(){
-  analyticsLoaded = true;
-
-  // Confusion matrices
-  const [cmDT, cmKNN, comp, feats] = await Promise.all([
+  analyticsLoaded=true;
+  const [cmDT,cmKNN,comp,feats]=await Promise.all([
     fetch('/api/chart/confusion/DT').then(x=>x.json()),
     fetch('/api/chart/confusion/KNN').then(x=>x.json()),
     fetch('/api/chart/comparison').then(x=>x.json()),
     fetch('/api/chart/features').then(x=>x.json()),
   ]);
 
-  // DT confusion
+  const cmLayout=(title,color)=>({
+    ...PTHEME,margin:{t:10,r:8,b:55,l:62},
+    xaxis:{tickfont:{size:9},title:{text:'Predicted',font:{size:9}}},
+    yaxis:{tickfont:{size:9},title:{text:'Actual',font:{size:9,color:'#4d6478'}},autorange:'reversed'}
+  });
+
   Plotly.newPlot('ch-cm-dt',[{
-    type:'heatmap', z:cmDT.z, x:cmDT.x, y:cmDT.y,
+    type:'heatmap',z:cmDT.z,x:cmDT.x,y:cmDT.y,
     colorscale:[[0,'#0c1018'],[0.3,'#0d3a6e'],[1,'#00c9a7']],
-    text:cmDT.z.map(r=>r.map(v=>String(v))),
-    texttemplate:'%{text}', textfont:{size:11,color:'#dce8f0'},
-    showscale:false, hovertemplate:'True: %{y}<br>Pred: %{x}<br>Count: %{z}<extra></extra>'
-  }],{
-    ...PTHEME, margin:{t:10,r:10,b:60,l:70},
-    xaxis:{tickfont:{size:10},title:{text:'Predicted',font:{size:10}}},
-    yaxis:{tickfont:{size:10},title:{text:'Actual',font:{size:10,color:'#4d6478'}},autorange:'reversed'}
-  },{responsive:true,displayModeBar:false});
+    text:cmDT.z.map(r=>r.map(v=>String(v))),texttemplate:'%{text}',
+    textfont:{size:11,color:'#dce8f0'},showscale:false,
+    hovertemplate:'True: %{y}<br>Pred: %{x}<br>Count: %{z}<extra></extra>'
+  }],cmLayout('DT','#00c9a7'),{responsive:true,displayModeBar:false});
 
-  // KNN confusion
   Plotly.newPlot('ch-cm-knn',[{
-    type:'heatmap', z:cmKNN.z, x:cmKNN.x, y:cmKNN.y,
+    type:'heatmap',z:cmKNN.z,x:cmKNN.x,y:cmKNN.y,
     colorscale:[[0,'#0c1018'],[0.3,'#0d3a6e'],[1,'#2196f3']],
-    text:cmKNN.z.map(r=>r.map(v=>String(v))),
-    texttemplate:'%{text}', textfont:{size:11,color:'#dce8f0'},
-    showscale:false, hovertemplate:'True: %{y}<br>Pred: %{x}<br>Count: %{z}<extra></extra>'
-  }],{
-    ...PTHEME, margin:{t:10,r:10,b:60,l:70},
-    xaxis:{tickfont:{size:10},title:{text:'Predicted',font:{size:10}}},
-    yaxis:{tickfont:{size:10},title:{text:'Actual',font:{size:10,color:'#4d6478'}},autorange:'reversed'}
-  },{responsive:true,displayModeBar:false});
+    text:cmKNN.z.map(r=>r.map(v=>String(v))),texttemplate:'%{text}',
+    textfont:{size:11,color:'#dce8f0'},showscale:false,
+    hovertemplate:'True: %{y}<br>Pred: %{x}<br>Count: %{z}<extra></extra>'
+  }],cmLayout('KNN','#2196f3'),{responsive:true,displayModeBar:false});
 
-  // Model comparison grouped bar
   Plotly.newPlot('ch-compare',[
     {name:'Decision Tree',type:'bar',x:comp.metrics,y:comp.DT,
-     marker:{color:'rgba(0,201,167,0.8)',line:{color:'var(--accent)',width:1}}},
+     marker:{color:'rgba(0,201,167,0.8)'}},
     {name:'KNN',type:'bar',x:comp.metrics,y:comp.KNN,
-     marker:{color:'rgba(33,150,243,0.8)',line:{color:'#2196f3',width:1}}}
+     marker:{color:'rgba(33,150,243,0.8)'}}
   ],{
-    ...PTHEME, barmode:'group', margin:{t:10,r:10,b:50,l:50},
-    yaxis:{range:[90,100],tickfont:{size:10},gridcolor:'#1a2535',gridwidth:0.5},
-    xaxis:{tickfont:{size:11}},
-    legend:{font:{size:10},bgcolor:'transparent',x:0.7,y:1.1,orientation:'h'}
+    ...PTHEME,barmode:'group',margin:{t:10,r:8,b:45,l:45},
+    yaxis:{range:[85,100],tickfont:{size:9},gridcolor:'#1a2535',gridwidth:0.5},
+    xaxis:{tickfont:{size:10}},
+    legend:{font:{size:9},bgcolor:'transparent',orientation:'h',x:0,y:1.15}
   },{responsive:true,displayModeBar:false});
 
-  // Feature importance horizontal bar
   Plotly.newPlot('ch-features',[{
-    type:'bar', orientation:'h',
+    type:'bar',orientation:'h',
     x:feats.scores.slice().reverse(),
     y:feats.features.slice().reverse(),
     marker:{color:feats.scores.slice().reverse().map(v=>
-      v>10?'rgba(0,201,167,0.85)':v>5?'rgba(33,150,243,0.7)':'rgba(33,150,243,0.4)'
-    )},
+      v>10?'rgba(0,201,167,0.85)':v>5?'rgba(33,150,243,0.7)':'rgba(33,150,243,0.4)')},
     text:feats.scores.slice().reverse().map(v=>v+'%'),
-    textposition:'outside', textfont:{size:9,color:'#4d6478'},
+    textposition:'outside',textfont:{size:8,color:'#4d6478'},
     hovertemplate:'%{y}: %{x:.2f}%<extra></extra>'
   }],{
-    ...PTHEME, margin:{t:10,r:60,b:30,l:160},
-    xaxis:{tickfont:{size:9},gridcolor:'#1a2535',gridwidth:0.5,title:{text:'Importance (%)',font:{size:9}}},
-    yaxis:{tickfont:{size:9}}
+    ...PTHEME,margin:{t:10,r:50,b:28,l:155},
+    xaxis:{tickfont:{size:8},gridcolor:'#1a2535',gridwidth:0.5,title:{text:'Importance (%)',font:{size:8}}},
+    yaxis:{tickfont:{size:8}}
   },{responsive:true,displayModeBar:false});
 
-  // Per-class table
   if(metricsData){
-    const clsNames = ['Normal','DoS','Probe','R2L','U2R'];
-    const colors   = {'Normal':'var(--normal)','DoS':'var(--danger)','Probe':'var(--probe)','R2L':'var(--r2l)','U2R':'var(--u2r)'};
-    $('ch-perclass').innerHTML = `
-      <table class="pct">
-        <thead><tr>
-          <th>Class</th>
+    const cls=['Normal','DoS','Probe','R2L','U2R'];
+    $('ch-perclass').innerHTML=`<table class="pct">
+      <thead>
+        <tr><th>Class</th>
           <th colspan="3" style="text-align:center;border-left:1px solid var(--border)">Decision Tree</th>
           <th colspan="3" style="text-align:center;border-left:1px solid var(--border)">KNN</th>
-          <th style="border-left:1px solid var(--border)">Support</th>
-        </tr>
-        <tr>
-          <th></th>
-          <th style="border-left:1px solid var(--border)">Precision</th><th>Recall</th><th>F1</th>
-          <th style="border-left:1px solid var(--border)">Precision</th><th>Recall</th><th>F1</th>
-          <th style="border-left:1px solid var(--border)"></th>
-        </tr></thead>
-        <tbody>
-        ${clsNames.map(cls=>{
-          const dt  = metricsData.DT.per_class[cls]  || {};
-          const knn = metricsData.KNN.per_class[cls] || {};
-          return `<tr>
-            <td><span class="badge ${badgeCls(cls)}">${cls}</span></td>
-            <td style="border-left:1px solid var(--border)">${dt.precision||0}%</td>
-            <td>${dt.recall||0}%</td>
-            <td>${dt.f1||0}%</td>
-            <td style="border-left:1px solid var(--border)">${knn.precision||0}%</td>
-            <td>${knn.recall||0}%</td>
-            <td>${knn.f1||0}%</td>
-            <td style="border-left:1px solid var(--border);color:var(--muted)">${dt.support||0}</td>
-          </tr>`;
-        }).join('')}
-        </tbody>
-      </table>`;
+          <th style="border-left:1px solid var(--border)">N</th></tr>
+        <tr><th></th>
+          <th style="border-left:1px solid var(--border)">Prec</th><th>Rec</th><th>F1</th>
+          <th style="border-left:1px solid var(--border)">Prec</th><th>Rec</th><th>F1</th>
+          <th style="border-left:1px solid var(--border)"></th></tr>
+      </thead><tbody>
+      ${cls.map(c=>{
+        const dt=metricsData.DT.per_class[c]||{},knn=metricsData.KNN.per_class[c]||{};
+        return `<tr>
+          <td><span class="badge ${badgeCls(c)}">${c}</span></td>
+          <td style="border-left:1px solid var(--border)">${dt.precision||0}%</td>
+          <td>${dt.recall||0}%</td><td>${dt.f1||0}%</td>
+          <td style="border-left:1px solid var(--border)">${knn.precision||0}%</td>
+          <td>${knn.recall||0}%</td><td>${knn.f1||0}%</td>
+          <td style="border-left:1px solid var(--border);color:var(--muted)">${dt.support||0}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
   }
 }
 
-// ── Clock ────────────────────────────────────────────────────────────────────
+// ── Clock ─────────────────────────────────────────────────────────────────────
 setInterval(()=>{
   $('clock').textContent=new Date().toTimeString().slice(0,8);
   upSecs++;
-  $('st-uptime').textContent=`Uptime: ${String(Math.floor(upSecs/60)).padStart(2,'0')}:${String(upSecs%60).padStart(2,'0')}`;
+  $('st-uptime').textContent=`${String(Math.floor(upSecs/60)).padStart(2,'0')}:${String(upSecs%60).padStart(2,'0')}`;
 },1000);
 
-// ── Boot ─────────────────────────────────────────────────────────────────────
 waitReady();
 </script>
 </body>
