@@ -91,7 +91,7 @@ body{
 .bn-icon{font-size:18px;line-height:1}
 
 /* ── BODY ── */
-.body{flex:1;overflow:hidden;display:flex;min-height:0}
+.body{flex:1;display:flex;min-height:0;overflow:hidden}
 
 /* ── SIDEBAR ── */
 .sidebar{
@@ -168,8 +168,8 @@ body{
 .mini-f{height:100%;background:var(--blue);border-radius:2px;transition:width .5s}
 
 /* ── PAGES ── */
-.pages{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.page{display:none;flex-direction:column;flex:1;overflow:hidden}
+.pages{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.page{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .page.on{display:flex}
 
 /* ── LIVE PAGE ── */
@@ -223,7 +223,7 @@ body{
 .pbtn.paused{border-color:var(--warn);color:var(--warn)}
 
 /* alert table */
-.tscroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.tscroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
 .tscroll::-webkit-scrollbar{width:3px;height:3px}
 .tscroll::-webkit-scrollbar-thumb{background:var(--dim)}
 
@@ -289,15 +289,18 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
 
 /* ── ANALYTICS PAGE ── */
 .agrid{
-  flex:1;overflow-y:auto;
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
   display:grid;gap:1px;background:var(--border);
   grid-template-columns:1fr 1fr;
+  min-height:0;
+  align-content:start;
 }
 @media(max-width:640px){.agrid{grid-template-columns:1fr}}
 .agrid::-webkit-scrollbar{width:3px}
 .agrid::-webkit-scrollbar-thumb{background:var(--dim)}
-.cc{background:var(--bg2);padding:14px;display:flex;flex-direction:column;min-height:240px}
-.cc.full{grid-column:1/-1}
+.cc{background:var(--bg2);padding:14px;display:flex;flex-direction:column;min-height:300px}
+.cc.full{grid-column:1/-1;min-height:280px}
 .cc-title{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
 .plotly-chart{flex:1;min-height:200px}
 .pct-wrap{overflow-x:auto;margin-top:8px}
@@ -307,7 +310,7 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
 .pct td{font-family:var(--mono);font-size:10px;padding:5px 6px;border-bottom:1px solid rgba(26,37,53,.5)}
 
 /* ── STATS PAGE (mobile only) ── */
-.stats-page{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.stats-page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px}
 .stat-card h3{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
 
