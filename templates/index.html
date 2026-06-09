@@ -2,540 +2,472 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>NetGuard IDS</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.26.0/plotly.min.js"></script>
 <style>
+/* ── RESET & TOKENS ─────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#07090d;--bg2:#0c1018;--bg3:#111720;
   --border:#1a2535;--border2:#233045;
   --text:#dce8f0;--muted:#4d6478;--dim:#1e2e3e;
   --accent:#00c9a7;--blue:#2196f3;--danger:#f44336;
-  --warn:#ff9800;--probe:#9c6fe4;--r2l:#ff7043;--u2r:#e91e8c;--normal:#00c9a7;
+  --warn:#ff9800;--probe:#9c6fe4;--r2l:#ff7043;--u2r:#e91e8c;
   --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --hdr:48px;
+  --bnav:0px; /* set to 52px on mobile via JS */
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{height:100%;height:-webkit-fill-available}
-body{
-  min-height:100vh;min-height:-webkit-fill-available;
-  background:var(--bg);color:var(--text);
-  font-family:var(--sans);font-size:13px;
-  display:flex;flex-direction:column;overflow:hidden;
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;overflow:hidden}
+
+/* ════════════════════════════════════════════════
+   LAYOUT: fixed header + fixed bottom nav
+   everything in between uses position:fixed with
+   top/bottom coordinates — guaranteed scrollable
+   ════════════════════════════════════════════════ */
+
+/* Header — always fixed top */
+.hdr{
+  position:fixed;top:0;left:0;right:0;
+  height:var(--hdr);z-index:100;
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:0 12px;
 }
 
-/* ── HEADER ── */
-.hdr{
-  display:flex;align-items:center;
-  height:48px;flex-shrink:0;
-  background:var(--bg2);border-bottom:1px solid var(--border);
-  padding:0 12px;gap:8px;
+/* Bottom nav — fixed bottom, mobile only */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:52px;z-index:100;
+  background:var(--bg2);border-top:1px solid var(--border);
+  display:none; /* shown via JS on mobile */
+  align-items:center;justify-content:space-around;
+  padding:0 8px;
 }
+.bn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:none;border:none;color:var(--muted);
+  font-family:var(--mono);font-size:9px;cursor:pointer;
+  padding:6px 14px;border-radius:6px;
+}
+.bn.on{color:var(--accent)}
+.bn-icon{font-size:17px;line-height:1}
+
+/* ── Content area — sits between header and bottom nav ── */
+/* Each "page" is position:fixed filling this space */
+.page{
+  position:fixed;
+  top:var(--hdr);
+  left:0;right:0;
+  bottom:var(--bnav);
+  display:none;
+  overflow:hidden;
+}
+.page.on{display:block}
+
+/* analytics and stats pages scroll themselves */
+#page-analytics, #page-stats{
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* ── HEADER INTERNALS ─────────────────────────── */
 .logo-icon{
   width:22px;height:22px;flex-shrink:0;
   border:1.5px solid var(--accent);border-radius:4px;
   position:relative;overflow:hidden;
 }
 .logo-icon::after{
-  content:'';position:absolute;
-  width:8px;height:8px;top:50%;left:50%;
-  transform:translate(-50%,-50%) scale(.55);
+  content:'';position:absolute;inset:0;
+  margin:auto;width:8px;height:8px;
   background:var(--accent);border-radius:50%;
   animation:pdot 2s ease-in-out infinite;
 }
-@keyframes pdot{0%,100%{transform:translate(-50%,-50%) scale(.55);opacity:.6}50%{transform:translate(-50%,-50%) scale(1);opacity:1}}
-
+@keyframes pdot{0%,100%{transform:scale(.55);opacity:.6}50%{transform:scale(1);opacity:1}}
 .logo-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.08em;white-space:nowrap}
-
-/* nav tabs — center of header */
 .nav-tabs{display:flex;gap:4px;margin:0 auto}
 .ntab{
   font-family:var(--mono);font-size:10px;font-weight:700;
-  padding:5px 14px;border-radius:4px;
-  border:1px solid var(--border2);background:transparent;
-  color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;
-}
-.ntab.on{background:var(--accent);color:#07090d;border-color:var(--accent)}
-
-/* model switcher */
-.msw{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px;flex-shrink:0}
-.mb{
-  font-family:var(--mono);font-size:10px;font-weight:700;
-  padding:3px 8px;border-radius:3px;border:none;
+  padding:5px 14px;border-radius:4px;border:1px solid var(--border2);
   background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;
 }
+.ntab.on{background:var(--accent);color:#07090d;border-color:var(--accent)}
+.msw{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px;flex-shrink:0}
+.mb{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
 .mb.on{background:var(--blue);color:#fff}
-
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:blink 1.1s ease-in-out infinite}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:blink 1.1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
 
-/* ── BOTTOM NAV (mobile) ── */
-.bnav{
-  display:none;
-  height:52px;flex-shrink:0;
-  background:var(--bg2);border-top:1px solid var(--border);
-  padding:0 8px;
-}
-@media(max-width:640px){
-  .bnav{display:flex;align-items:center;justify-content:space-around}
-  /* hide desktop nav from header on mobile */
-  .nav-tabs{display:none}
-}
-.bn{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  font-family:var(--mono);font-size:9px;color:var(--muted);
-  cursor:pointer;padding:6px 12px;border-radius:6px;
-  border:none;background:transparent;transition:all .15s;
-}
-.bn.on{color:var(--accent)}
-.bn-icon{font-size:18px;line-height:1}
+/* ════════════════════════════════════════════════
+   LIVE PAGE  — sidebar + main split
+   ════════════════════════════════════════════════ */
+#page-live{display:none}
+#page-live.on{display:flex;flex-direction:row;overflow:hidden}
 
-/* ── BODY ── */
-.body{flex:1;display:flex;min-height:0;overflow:hidden}
-
-/* ── SIDEBAR ── */
+/* sidebar */
 .sidebar{
   width:190px;flex-shrink:0;
-  background:var(--bg2);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
+  height:100%;
   overflow-y:auto;overflow-x:hidden;
+  background:var(--bg2);border-right:1px solid var(--border);
 }
 .sidebar::-webkit-scrollbar{width:3px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--dim)}
-
-/* on mobile sidebar becomes a bottom-sheet drawer */
-@media(max-width:640px){
-  .sidebar{
-    position:fixed;bottom:52px;left:0;right:0;
-    width:100%;height:auto;max-height:65vh;
-    border-right:none;border-top:1px solid var(--border);
-    z-index:300;
-    transform:translateY(100%);
-    transition:transform .28s cubic-bezier(.4,0,.2,1);
-    border-radius:16px 16px 0 0;
-    box-shadow:0 -8px 32px rgba(0,0,0,.6);
-  }
-  .sidebar.open{transform:translateY(0)}
-  /* drag handle */
-  .sidebar::before{
-    content:'';display:block;
-    width:36px;height:4px;border-radius:2px;
-    background:var(--dim);margin:10px auto 4px;flex-shrink:0;
-  }
-  /* on mobile, sidebar sections go horizontal */
-  .sb-inner{display:flex;flex-direction:column;padding-bottom:8px}
-}
-
-.sb-section{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sb-sec{padding:12px 14px;border-bottom:1px solid var(--border)}
 .sb-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
 
-/* counters */
-.ctr-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-@media(max-width:640px){.ctr-grid{grid-template-columns:repeat(4,1fr)}}
-.ctr{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
-.ctr-lbl{font-size:9px;color:var(--muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
-.ctr-val{font-family:var(--mono);font-size:17px;font-weight:700;line-height:1}
-.ctr-span{grid-column:1/-1}
-.c-blue{color:var(--blue)}.c-red{color:var(--danger)}.c-green{color:var(--normal)}.c-warn{color:var(--warn)}
+/* sidebar hidden on mobile */
+@media(max-width:640px){.sidebar{display:none}}
 
-/* attack bars */
-.atk-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
-.atk-lbl{font-family:var(--mono);font-size:9px;width:36px;flex-shrink:0}
-.atk-track{flex:1;height:3px;background:var(--dim);border-radius:2px;overflow:hidden}
-.atk-fill{height:100%;border-radius:2px;transition:width .5s}
-.atk-num{font-family:var(--mono);font-size:9px;color:var(--muted);width:20px;text-align:right}
-
-/* filter chips */
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.chip{
-  font-family:var(--mono);font-size:9px;font-weight:700;
-  padding:4px 9px;border-radius:4px;border:1px solid;
-  cursor:pointer;transition:opacity .15s;opacity:.3;
+/* live main */
+.live-main{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  height:100%;overflow:hidden;
 }
-.chip.on{opacity:1}
-.ch-all{border-color:var(--text);color:var(--text)}
-.ch-dos{border-color:var(--danger);color:var(--danger)}
-.ch-probe{border-color:var(--probe);color:var(--probe)}
-.ch-r2l{border-color:var(--r2l);color:var(--r2l)}
-.ch-u2r{border-color:var(--u2r);color:var(--u2r)}
-.ch-normal{border-color:var(--normal);color:var(--normal)}
 
-/* perf rows */
-.perf-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.perf-k{font-size:10px;color:var(--muted)}
-.perf-v{font-family:var(--mono);font-size:11px}
-.mini-t{height:3px;background:var(--dim);border-radius:2px;margin-top:2px;margin-bottom:5px}
-.mini-f{height:100%;background:var(--blue);border-radius:2px;transition:width .5s}
-
-/* ── PAGES ── */
-.pages{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
-.page{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
-.page.on{display:flex}
-
-/* ── LIVE PAGE ── */
-
-/* Metric cards — 2×2+1 on mobile, 5-col on desktop */
+/* metric strip */
 .mstrip{
-  display:grid;gap:0;
-  grid-template-columns:repeat(5,1fr);
-  border-bottom:1px solid var(--border);flex-shrink:0;
+  flex-shrink:0;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border-bottom:1px solid var(--border);
 }
 @media(max-width:640px){
   .mstrip{grid-template-columns:1fr 1fr}
 }
-.mc{
-  padding:10px 12px;border-right:1px solid var(--border);
-  position:relative;overflow:hidden;border-bottom:1px solid transparent;
-}
+.mc{padding:10px 12px;border-right:1px solid var(--border);position:relative;overflow:hidden}
 .mc:last-child{border-right:none}
 @media(max-width:640px){
   .mc:nth-child(even){border-right:none}
   .mc:nth-child(n+3){border-top:1px solid var(--border)}
-  /* 5th card spans full width */
-  .mc:nth-child(5){grid-column:1/-1;border-right:none}
+  .mc:nth-child(5){grid-column:1/-1}
 }
 .mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--ac,transparent)}
 .mc-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.mc-val{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1}
+.mc-val{font-family:var(--mono);font-size:17px;font-weight:700;line-height:1}
 .mc-sub{font-size:9px;color:var(--muted);margin-top:2px;min-height:12px}
 
-/* table toolbar */
-.tbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:7px 12px;border-bottom:1px solid var(--border);
-  flex-shrink:0;gap:8px;
-}
+/* toolbar */
+.tbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--border);gap:8px}
 .tbar-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 .tbar-r{display:flex;gap:6px;align-items:center}
-.srch{
-  background:var(--bg3);border:1px solid var(--border2);border-radius:4px;
-  padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--text);
-  outline:none;width:140px;transition:border-color .15s;
-}
+.srch{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--text);outline:none;width:140px;transition:border-color .15s}
 .srch::placeholder{color:var(--muted)}
 .srch:focus{border-color:var(--blue)}
 @media(max-width:640px){.srch{width:100px}}
-.pbtn{
-  font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.04em;
-  padding:5px 10px;border-radius:4px;border:1px solid var(--border2);
-  background:var(--bg3);color:var(--muted);cursor:pointer;white-space:nowrap;
-}
+.pbtn{font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 10px;border-radius:4px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;white-space:nowrap}
 .pbtn.paused{border-color:var(--warn);color:var(--warn)}
 
-/* alert table */
-.tscroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
-.tscroll::-webkit-scrollbar{width:3px;height:3px}
-.tscroll::-webkit-scrollbar-thumb{background:var(--dim)}
-
-/* Mobile: card layout instead of table */
-@media(max-width:640px){
-  table{display:none}
-  .card-feed{display:flex;flex-direction:column;gap:0}
+/* THE SCROLL AREA — flex:1 + overflow:auto is the key */
+.tscroll{
+  flex:1;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
 }
-@media(min-width:641px){
-  .card-feed{display:none}
-}
+.tscroll::-webkit-scrollbar{width:4px;height:4px}
+.tscroll::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px}
 
+/* desktop table */
 table{width:100%;border-collapse:collapse;min-width:680px}
-thead th{
-  position:sticky;top:0;background:var(--bg3);
-  font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.06em;
-  padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;
-}
-tbody tr{border-bottom:1px solid rgba(26,37,53,.6);animation:rwin .2s ease-out both}
-@keyframes rwin{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+thead th{position:sticky;top:0;background:var(--bg3);font-family:var(--mono);font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid rgba(26,37,53,.6)}
 tbody tr:hover{background:rgba(255,255,255,.02)}
 td{padding:5px 8px;font-size:11px;white-space:nowrap}
 td.mono{font-family:var(--mono);font-size:10px}
 td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
+@media(max-width:640px){table{display:none}}
 
-/* Mobile card item */
-.acard{
-  padding:10px 14px;border-bottom:1px solid var(--border);
-  display:grid;grid-template-columns:1fr auto;
-  gap:4px 8px;animation:rwin .2s ease-out both;
-}
-.acard-top{display:flex;align-items:center;gap:6px;grid-column:1/-1}
+/* mobile cards */
+.card-feed{display:none}
+@media(max-width:640px){.card-feed{display:block}}
+.acard{padding:10px 14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:3px 8px}
+.acard-top{grid-column:1/-1;display:flex;align-items:center;gap:6px}
 .acard-time{font-family:var(--mono);font-size:10px;color:var(--muted)}
-.acard-ips{font-family:var(--mono);font-size:10px;color:var(--blue);flex:1;overflow:hidden;text-overflow:ellipsis}
-.acard-meta{font-size:10px;color:var(--muted);grid-column:1}
-.acard-conf{display:flex;flex-direction:column;align-items:flex-end;gap:4px;grid-column:2;grid-row:2/4}
+.acard-ips{font-family:var(--mono);font-size:10px;color:var(--blue);overflow:hidden;text-overflow:ellipsis}
+.acard-meta{font-size:10px;color:var(--muted)}
+.acard-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;grid-row:2/4}
 
-.badge{
-  display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;
-  padding:2px 7px;border-radius:3px;border:1px solid;letter-spacing:.04em;
-}
-.b-normal{color:var(--normal);border-color:rgba(0,201,167,.35);background:rgba(0,201,167,.07)}
-.b-dos{color:var(--danger);border-color:rgba(244,67,54,.35);background:rgba(244,67,54,.07)}
-.b-probe{color:var(--probe);border-color:rgba(156,111,228,.35);background:rgba(156,111,228,.07)}
-.b-r2l{color:var(--r2l);border-color:rgba(255,112,67,.35);background:rgba(255,112,67,.07)}
-.b-u2r{color:var(--u2r);border-color:rgba(233,30,140,.35);background:rgba(233,30,140,.07)}
+/* status bar */
+.sbar{flex-shrink:0;padding:4px 12px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:12px}
+@media(max-width:640px){.sbar{display:none}}
+.si{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap}
+.sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sdg{background:var(--accent)}.sdb{background:var(--blue)}.sdo{background:var(--warn)}
+
+/* badges */
+.badge{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid;letter-spacing:.04em}
+.b-normal{color:#00c9a7;border-color:rgba(0,201,167,.35);background:rgba(0,201,167,.07)}
+.b-dos{color:#f44336;border-color:rgba(244,67,54,.35);background:rgba(244,67,54,.07)}
+.b-probe{color:#9c6fe4;border-color:rgba(156,111,228,.35);background:rgba(156,111,228,.07)}
+.b-r2l{color:#ff7043;border-color:rgba(255,112,67,.35);background:rgba(255,112,67,.07)}
+.b-u2r{color:#e91e8c;border-color:rgba(233,30,140,.35);background:rgba(233,30,140,.07)}
 
 .cbar{display:flex;align-items:center;gap:4px}
 .cbar-t{width:36px;height:3px;background:var(--dim);border-radius:2px}
 .cbar-f{height:100%;border-radius:2px}
 .cbar-n{font-family:var(--mono);font-size:9px;color:var(--muted)}
 
-/* status bar */
-.sbar{
-  padding:4px 12px;background:var(--bg2);border-top:1px solid var(--border);
-  display:flex;align-items:center;gap:12px;flex-shrink:0;
-}
-@media(max-width:640px){.sbar{display:none}}
-.si{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap}
-.sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.sdg{background:var(--accent)}.sdb{background:var(--blue)}.sdo{background:var(--warn)}
-
-/* ── ANALYTICS PAGE ── */
-.agrid{
-  flex:1;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  display:grid;gap:1px;background:var(--border);
-  grid-template-columns:1fr 1fr;
-  min-height:0;
-  align-content:start;
-}
+/* ════════════════════════════════════════════════
+   ANALYTICS PAGE — scrolls via .page override above
+   ════════════════════════════════════════════════ */
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
 @media(max-width:640px){.agrid{grid-template-columns:1fr}}
-.agrid::-webkit-scrollbar{width:3px}
-.agrid::-webkit-scrollbar-thumb{background:var(--dim)}
-.cc{background:var(--bg2);padding:14px;display:flex;flex-direction:column;min-height:300px}
-.cc.full{grid-column:1/-1;min-height:280px}
+.cc{background:var(--bg2);padding:14px}
+.cc.full{grid-column:1/-1}
 .cc-title{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-.plotly-chart{flex:1;min-height:200px}
-.pct-wrap{overflow-x:auto;margin-top:8px}
+.plotly-chart{height:280px}
+@media(max-width:640px){.plotly-chart{height:240px}}
+.pct-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
 .pct{width:100%;border-collapse:collapse;min-width:460px}
-.pct th{font-family:var(--mono);font-size:9px;color:var(--muted);padding:4px 6px;
-  text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.pct th{font-family:var(--mono);font-size:9px;color:var(--muted);padding:4px 6px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
 .pct td{font-family:var(--mono);font-size:10px;padding:5px 6px;border-bottom:1px solid rgba(26,37,53,.5)}
 
-/* ── STATS PAGE (mobile only) ── */
-.stats-page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0}
-.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px}
-.stat-card h3{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+/* ════════════════════════════════════════════════
+   STATS PAGE (mobile) — scrolls via .page override above
+   ════════════════════════════════════════════════ */
+#page-stats{padding:14px;display:none}
+#page-stats.on{display:block}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
+.stat-card h3{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+
+/* shared small components */
+.ctr-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.ctr{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+.ctr-lbl{font-size:9px;color:var(--muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
+.ctr-val{font-family:var(--mono);font-size:17px;font-weight:700;line-height:1}
+.ctr-span{grid-column:1/-1}
+.c-blue{color:var(--blue)}.c-red{color:var(--danger)}.c-green{color:var(--accent)}.c-warn{color:var(--warn)}
+.atk-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.atk-lbl{font-family:var(--mono);font-size:9px;width:36px;flex-shrink:0}
+.atk-track{flex:1;height:3px;background:var(--dim);border-radius:2px;overflow:hidden}
+.atk-fill{height:100%;border-radius:2px;transition:width .5s}
+.atk-num{font-family:var(--mono);font-size:9px;color:var(--muted);width:20px;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 9px;border-radius:4px;border:1px solid;cursor:pointer;opacity:.3;transition:opacity .15s}
+.chip.on{opacity:1}
+.ch-all{border-color:var(--text);color:var(--text)}
+.ch-dos{border-color:#f44336;color:#f44336}
+.ch-probe{border-color:#9c6fe4;color:#9c6fe4}
+.ch-r2l{border-color:#ff7043;color:#ff7043}
+.ch-u2r{border-color:#e91e8c;color:#e91e8c}
+.ch-normal{border-color:#00c9a7;color:#00c9a7}
+.perf-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.perf-k{font-size:10px;color:var(--muted)}
+.perf-v{font-family:var(--mono);font-size:11px}
+.mini-t{height:3px;background:var(--dim);border-radius:2px;margin-top:2px;margin-bottom:5px}
+.mini-f{height:100%;background:var(--blue);border-radius:2px;transition:width .5s}
 
 /* ── OVERLAY ── */
-#overlay{
-  position:fixed;inset:0;background:rgba(7,9,13,.95);z-index:500;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:14px;padding:20px;text-align:center;
-}
+#overlay{position:fixed;inset:0;z-index:999;background:rgba(7,9,13,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
 #overlay.gone{display:none}
 .spin{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.ov-title{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.08em}
-.ov-sub{font-size:11px;color:var(--muted)}
+.ov1{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.08em}
+.ov2{font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
 
 <div id="overlay">
   <div class="spin"></div>
-  <div class="ov-title">TRAINING MODELS</div>
-  <div class="ov-sub">Decision Tree &amp; KNN on NSL-KDD…</div>
+  <div class="ov1">TRAINING MODELS</div>
+  <div class="ov2">Decision Tree &amp; KNN on NSL-KDD…</div>
 </div>
 
-<!-- HEADER -->
+<!-- FIXED HEADER -->
 <div class="hdr">
   <div class="logo-icon"></div>
   <div class="logo-name">NETGUARD·IDS</div>
-
-  <!-- Desktop nav -->
   <div class="nav-tabs">
-    <button class="ntab on" onclick="showPage('live',this)">Live</button>
-    <button class="ntab" onclick="showPage('analytics',this)">Analytics</button>
+    <button class="ntab on" onclick="go('live',this)">Live</button>
+    <button class="ntab"    onclick="go('analytics',this)">Analytics</button>
   </div>
-
-  <!-- Model switcher -->
   <div class="msw">
     <button class="mb on" id="mb-dt"   onclick="setModel('DT')">DT</button>
     <button class="mb"    id="mb-knn"  onclick="setModel('KNN')">KNN</button>
     <button class="mb"    id="mb-both" onclick="setModel('BOTH')">BOTH</button>
   </div>
-  <div class="live-dot"></div>
+  <div class="ldot"></div>
 </div>
 
-<!-- BODY -->
-<div class="body">
+<!-- FIXED BOTTOM NAV (injected on mobile) -->
+<div class="bnav" id="bnav">
+  <button class="bn on"  id="bn-live"      onclick="go('live',null,'live')">      <span class="bn-icon">📡</span>Live</button>
+  <button class="bn"     id="bn-stats"     onclick="go('stats',null,'stats')">    <span class="bn-icon">📊</span>Stats</button>
+  <button class="bn"     id="bn-analytics" onclick="go('analytics',null,'analytics')"><span class="bn-icon">🔬</span>Charts</button>
+</div>
 
-  <!-- SIDEBAR (desktop) / DRAWER (mobile) -->
+<!-- ═══ LIVE PAGE ═══ -->
+<div class="page" id="page-live">
+  <!-- sidebar (desktop only) -->
   <div class="sidebar" id="sidebar">
-    <div class="sb-inner">
-
-      <div class="sb-section">
-        <div class="sb-lbl">Counters</div>
-        <div class="ctr-grid">
-          <div class="ctr ctr-span"><div class="ctr-lbl">Total Inspected</div><div class="ctr-val c-blue" id="s-total">0</div></div>
-          <div class="ctr"><div class="ctr-lbl">Attacks</div><div class="ctr-val c-red" id="s-atk">0</div></div>
-          <div class="ctr"><div class="ctr-lbl">Normal</div><div class="ctr-val c-green" id="s-norm">0</div></div>
-          <div class="ctr"><div class="ctr-lbl">Accuracy</div><div class="ctr-val c-green" id="s-acc">—</div></div>
-          <div class="ctr"><div class="ctr-lbl">Correct</div><div class="ctr-val c-warn" id="s-corr">—</div></div>
-        </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Counters</div>
+      <div class="ctr-grid">
+        <div class="ctr ctr-span"><div class="ctr-lbl">Total</div><div class="ctr-val c-blue" id="s-total">0</div></div>
+        <div class="ctr"><div class="ctr-lbl">Attacks</div><div class="ctr-val c-red"  id="s-atk">0</div></div>
+        <div class="ctr"><div class="ctr-lbl">Normal</div><div class="ctr-val c-green" id="s-norm">0</div></div>
+        <div class="ctr"><div class="ctr-lbl">Accuracy</div><div class="ctr-val c-green" id="s-acc">—</div></div>
+        <div class="ctr"><div class="ctr-lbl">Correct</div><div class="ctr-val c-warn"  id="s-corr">—</div></div>
       </div>
-
-      <div class="sb-section">
-        <div class="sb-lbl">Attack Breakdown</div>
-        <div class="atk-row"><span class="atk-lbl" style="color:var(--danger)">DoS</span><div class="atk-track"><div class="atk-fill" id="ab-dos" style="background:var(--danger);width:0%"></div></div><span class="atk-num" id="an-dos">0</span></div>
-        <div class="atk-row"><span class="atk-lbl" style="color:var(--probe)">Probe</span><div class="atk-track"><div class="atk-fill" id="ab-probe" style="background:var(--probe);width:0%"></div></div><span class="atk-num" id="an-probe">0</span></div>
-        <div class="atk-row"><span class="atk-lbl" style="color:var(--r2l)">R2L</span><div class="atk-track"><div class="atk-fill" id="ab-r2l" style="background:var(--r2l);width:0%"></div></div><span class="atk-num" id="an-r2l">0</span></div>
-        <div class="atk-row"><span class="atk-lbl" style="color:var(--u2r)">U2R</span><div class="atk-track"><div class="atk-fill" id="ab-u2r" style="background:var(--u2r);width:0%"></div></div><span class="atk-num" id="an-u2r">0</span></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Breakdown</div>
+      <div class="atk-row"><span class="atk-lbl" style="color:#f44336">DoS</span>  <div class="atk-track"><div class="atk-fill" id="ab-dos"   style="background:#f44336;width:0%"></div></div><span class="atk-num" id="an-dos">0</span></div>
+      <div class="atk-row"><span class="atk-lbl" style="color:#9c6fe4">Probe</span><div class="atk-track"><div class="atk-fill" id="ab-probe" style="background:#9c6fe4;width:0%"></div></div><span class="atk-num" id="an-probe">0</span></div>
+      <div class="atk-row"><span class="atk-lbl" style="color:#ff7043">R2L</span>  <div class="atk-track"><div class="atk-fill" id="ab-r2l"   style="background:#ff7043;width:0%"></div></div><span class="atk-num" id="an-r2l">0</span></div>
+      <div class="atk-row"><span class="atk-lbl" style="color:#e91e8c">U2R</span>  <div class="atk-track"><div class="atk-fill" id="ab-u2r"   style="background:#e91e8c;width:0%"></div></div><span class="atk-num" id="an-u2r">0</span></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Filter</div>
+      <div class="chips">
+        <span class="chip ch-all on"  onclick="setFilter('ALL')">ALL</span>
+        <span class="chip ch-dos"     onclick="setFilter('DoS')">DoS</span>
+        <span class="chip ch-probe"   onclick="setFilter('Probe')">Probe</span>
+        <span class="chip ch-r2l"     onclick="setFilter('R2L')">R2L</span>
+        <span class="chip ch-u2r"     onclick="setFilter('U2R')">U2R</span>
+        <span class="chip ch-normal"  onclick="setFilter('Normal')">Normal</span>
       </div>
-
-      <div class="sb-section">
-        <div class="sb-lbl">Filter</div>
-        <div class="chips">
-          <span class="chip ch-all on"   onclick="setFilter('ALL')">ALL</span>
-          <span class="chip ch-dos"      onclick="setFilter('DoS')">DoS</span>
-          <span class="chip ch-probe"    onclick="setFilter('Probe')">Probe</span>
-          <span class="chip ch-r2l"      onclick="setFilter('R2L')">R2L</span>
-          <span class="chip ch-u2r"      onclick="setFilter('U2R')">U2R</span>
-          <span class="chip ch-normal"   onclick="setFilter('Normal')">Normal</span>
-        </div>
-      </div>
-
-      <div class="sb-section" style="flex:1">
-        <div class="sb-lbl">Model Performance</div>
-        <div id="sb-perf"></div>
-      </div>
-
+    </div>
+    <div class="sb-sec" style="flex:1">
+      <div class="sb-lbl">Performance</div>
+      <div id="sb-perf"></div>
     </div>
   </div>
 
-  <!-- PAGES -->
-  <div class="pages">
-
-    <!-- LIVE PAGE -->
-    <div class="page on" id="page-live">
-      <div class="mstrip">
-        <div class="mc" style="--ac:var(--blue)"><div class="mc-lbl">Packets/sec</div><div class="mc-val" id="m-pps" style="color:var(--blue)">0</div><div class="mc-sub" id="m-pps-d">&nbsp;</div></div>
-        <div class="mc" style="--ac:var(--normal)"><div class="mc-lbl">Accuracy</div><div class="mc-val" id="m-acc" style="color:var(--normal)">—</div><div class="mc-sub">&nbsp;</div></div>
-        <div class="mc" style="--ac:var(--probe)"><div class="mc-lbl">Precision</div><div class="mc-val" id="m-prec" style="color:var(--probe)">—</div><div class="mc-sub">&nbsp;</div></div>
-        <div class="mc" style="--ac:var(--r2l)"><div class="mc-lbl">Recall</div><div class="mc-val" id="m-rec" style="color:var(--r2l)">—</div><div class="mc-sub">&nbsp;</div></div>
-        <div class="mc" style="--ac:var(--danger)"><div class="mc-lbl">Alert Rate</div><div class="mc-val" id="m-alert" style="color:var(--danger)">0%</div><div class="mc-sub">&nbsp;</div></div>
+  <!-- live main -->
+  <div class="live-main">
+    <div class="mstrip">
+      <div class="mc" style="--ac:#2196f3">  <div class="mc-lbl">Packets/sec</div><div class="mc-val" id="m-pps"   style="color:#2196f3">0</div>  <div class="mc-sub" id="m-ppsd">&nbsp;</div></div>
+      <div class="mc" style="--ac:#00c9a7">  <div class="mc-lbl">Accuracy</div>   <div class="mc-val" id="m-acc"   style="color:#00c9a7">—</div>  <div class="mc-sub">&nbsp;</div></div>
+      <div class="mc" style="--ac:#9c6fe4">  <div class="mc-lbl">Precision</div>  <div class="mc-val" id="m-prec"  style="color:#9c6fe4">—</div>  <div class="mc-sub">&nbsp;</div></div>
+      <div class="mc" style="--ac:#ff7043">  <div class="mc-lbl">Recall</div>     <div class="mc-val" id="m-rec"   style="color:#ff7043">—</div>  <div class="mc-sub">&nbsp;</div></div>
+      <div class="mc" style="--ac:#f44336">  <div class="mc-lbl">Alert Rate</div> <div class="mc-val" id="m-alert" style="color:#f44336">0%</div> <div class="mc-sub">&nbsp;</div></div>
+    </div>
+    <div class="tbar">
+      <span class="tbar-lbl">Log — <span id="row-count">0</span></span>
+      <div class="tbar-r">
+        <input class="srch" id="search" placeholder="Search…" oninput="renderFeed()"/>
+        <button class="pbtn" id="pbtn" onclick="togglePause()">⏸ PAUSE</button>
       </div>
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead><tr>
+          <th>Time</th><th>Src IP</th><th>Dst IP</th><th>Proto</th>
+          <th>Service</th><th>Bytes</th><th>Dur</th><th>Flag</th>
+          <th>Prediction</th><th>True</th><th>Mdl</th><th>Conf</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="card-feed" id="cardfeed"></div>
+    </div>
+    <div class="sbar">
+      <div class="si"><div class="sdot sdg"></div>NSL-KDD</div>
+      <div class="si"><div class="sdot sdb"></div>Model: <span id="st-model" style="color:#2196f3;margin-left:3px">DT</span></div>
+      <div class="si"><div class="sdot sdo"></div>KDDTest+</div>
+      <div class="si" style="margin-left:auto" id="st-uptime">00:00</div>
+    </div>
+  </div>
+</div>
 
-      <div class="tbar">
-        <span class="tbar-lbl">Log — <span id="row-count">0</span></span>
-        <div class="tbar-r">
-          <input class="srch" id="search" placeholder="Search…" oninput="renderFeed()"/>
-          <button class="pbtn" id="pbtn" onclick="togglePause()">⏸</button>
-        </div>
-      </div>
+<!-- ═══ ANALYTICS PAGE ═══ -->
+<div class="page" id="page-analytics">
+  <div class="agrid">
+    <div class="cc">      <div class="cc-title">Confusion Matrix — Decision Tree</div><div class="plotly-chart" id="ch-cm-dt"></div></div>
+    <div class="cc">      <div class="cc-title">Confusion Matrix — KNN</div>          <div class="plotly-chart" id="ch-cm-knn"></div></div>
+    <div class="cc">      <div class="cc-title">Model Comparison</div>                <div class="plotly-chart" id="ch-compare"></div></div>
+    <div class="cc">      <div class="cc-title">Feature Importances (DT)</div>        <div class="plotly-chart" id="ch-features"></div></div>
+    <div class="cc full"> <div class="cc-title">Per-Class Performance</div>           <div class="pct-wrap" id="ch-perclass"></div></div>
+  </div>
+</div>
 
-      <div class="tscroll">
-        <!-- Desktop table -->
-        <table>
-          <thead><tr>
-            <th>Time</th><th>Src IP</th><th>Dst IP</th><th>Proto</th>
-            <th>Service</th><th>Bytes</th><th>Dur</th><th>Flag</th>
-            <th>Prediction</th><th>True</th><th>Mdl</th><th>Conf</th>
-          </tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-        <!-- Mobile cards -->
-        <div class="card-feed" id="cardfeed"></div>
-      </div>
-
-      <div class="sbar">
-        <div class="si"><div class="sdot sdg"></div>NSL-KDD</div>
-        <div class="si"><div class="sdot sdb"></div>Model: <span id="st-model" style="color:var(--blue);margin-left:3px">DT</span></div>
-        <div class="si"><div class="sdot sdo"></div>KDDTest+</div>
-        <div class="si" style="margin-left:auto" id="st-uptime">00:00</div>
-      </div>
-    </div><!-- /live -->
-
-    <!-- ANALYTICS PAGE -->
-    <div class="page" id="page-analytics">
-      <div class="agrid">
-        <div class="cc"><div class="cc-title">Confusion Matrix — Decision Tree</div><div class="plotly-chart" id="ch-cm-dt"></div></div>
-        <div class="cc"><div class="cc-title">Confusion Matrix — KNN</div><div class="plotly-chart" id="ch-cm-knn"></div></div>
-        <div class="cc"><div class="cc-title">Model Comparison</div><div class="plotly-chart" id="ch-compare"></div></div>
-        <div class="cc"><div class="cc-title">Feature Importances (DT)</div><div class="plotly-chart" id="ch-features"></div></div>
-        <div class="cc full"><div class="cc-title">Per-Class Performance</div><div class="pct-wrap" id="ch-perclass"></div></div>
-      </div>
-    </div><!-- /analytics -->
-
-    <!-- STATS PAGE (mobile sidebar content) -->
-    <div class="page" id="page-stats">
-      <div class="stats-page">
-        <div class="stat-card">
-          <h3>Live Counters</h3>
-          <div class="ctr-grid" style="grid-template-columns:1fr 1fr">
-            <div class="ctr ctr-span"><div class="ctr-lbl">Total Inspected</div><div class="ctr-val c-blue" id="s2-total">0</div></div>
-            <div class="ctr"><div class="ctr-lbl">Attacks</div><div class="ctr-val c-red" id="s2-atk">0</div></div>
-            <div class="ctr"><div class="ctr-lbl">Normal</div><div class="ctr-val c-green" id="s2-norm">0</div></div>
-            <div class="ctr"><div class="ctr-lbl">Accuracy</div><div class="ctr-val c-green" id="s2-acc">—</div></div>
-            <div class="ctr"><div class="ctr-lbl">Correct</div><div class="ctr-val c-warn" id="s2-corr">—</div></div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <h3>Attack Breakdown</h3>
-          <div class="atk-row"><span class="atk-lbl" style="color:var(--danger)">DoS</span><div class="atk-track"><div class="atk-fill" id="ab2-dos" style="background:var(--danger);width:0%"></div></div><span class="atk-num" id="an2-dos">0</span></div>
-          <div class="atk-row"><span class="atk-lbl" style="color:var(--probe)">Probe</span><div class="atk-track"><div class="atk-fill" id="ab2-probe" style="background:var(--probe);width:0%"></div></div><span class="atk-num" id="an2-probe">0</span></div>
-          <div class="atk-row"><span class="atk-lbl" style="color:var(--r2l)">R2L</span><div class="atk-track"><div class="atk-fill" id="ab2-r2l" style="background:var(--r2l);width:0%"></div></div><span class="atk-num" id="an2-r2l">0</span></div>
-          <div class="atk-row"><span class="atk-lbl" style="color:var(--u2r)">U2R</span><div class="atk-track"><div class="atk-fill" id="ab2-u2r" style="background:var(--u2r);width:0%"></div></div><span class="atk-num" id="an2-u2r">0</span></div>
-        </div>
-        <div class="stat-card">
-          <h3>Filter Alerts</h3>
-          <div class="chips">
-            <span class="chip ch-all on"  onclick="setFilter('ALL')">ALL</span>
-            <span class="chip ch-dos"     onclick="setFilter('DoS')">DoS</span>
-            <span class="chip ch-probe"   onclick="setFilter('Probe')">Probe</span>
-            <span class="chip ch-r2l"     onclick="setFilter('R2L')">R2L</span>
-            <span class="chip ch-u2r"     onclick="setFilter('U2R')">U2R</span>
-            <span class="chip ch-normal"  onclick="setFilter('Normal')">Normal</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <h3>Model Performance</h3>
-          <div id="sb-perf2"></div>
-        </div>
-      </div>
-    </div><!-- /stats -->
-
-  </div><!-- /pages -->
-</div><!-- /body -->
-
-<!-- BOTTOM NAV (mobile only) -->
-<div class="bnav">
-  <button class="bn on" id="bn-live" onclick="showPage('live',null,'bn-live')">
-    <span class="bn-icon">📡</span><span>Live</span>
-  </button>
-  <button class="bn" id="bn-stats" onclick="showPage('stats',null,'bn-stats')">
-    <span class="bn-icon">📊</span><span>Stats</span>
-  </button>
-  <button class="bn" id="bn-analytics" onclick="showPage('analytics',null,'bn-analytics')">
-    <span class="bn-icon">🔬</span><span>Analytics</span>
-  </button>
+<!-- ═══ STATS PAGE (mobile only) ═══ -->
+<div class="page" id="page-stats">
+  <div class="stat-card">
+    <h3>Live Counters</h3>
+    <div class="ctr-grid">
+      <div class="ctr ctr-span"><div class="ctr-lbl">Total</div><div class="ctr-val c-blue" id="s2-total">0</div></div>
+      <div class="ctr"><div class="ctr-lbl">Attacks</div>  <div class="ctr-val c-red"   id="s2-atk">0</div></div>
+      <div class="ctr"><div class="ctr-lbl">Normal</div>   <div class="ctr-val c-green" id="s2-norm">0</div></div>
+      <div class="ctr"><div class="ctr-lbl">Accuracy</div> <div class="ctr-val c-green" id="s2-acc">—</div></div>
+      <div class="ctr"><div class="ctr-lbl">Correct</div>  <div class="ctr-val c-warn"  id="s2-corr">—</div></div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <h3>Attack Breakdown</h3>
+    <div class="atk-row"><span class="atk-lbl" style="color:#f44336">DoS</span>  <div class="atk-track"><div class="atk-fill" id="ab2-dos"   style="background:#f44336;width:0%"></div></div><span class="atk-num" id="an2-dos">0</span></div>
+    <div class="atk-row"><span class="atk-lbl" style="color:#9c6fe4">Probe</span><div class="atk-track"><div class="atk-fill" id="ab2-probe" style="background:#9c6fe4;width:0%"></div></div><span class="atk-num" id="an2-probe">0</span></div>
+    <div class="atk-row"><span class="atk-lbl" style="color:#ff7043">R2L</span>  <div class="atk-track"><div class="atk-fill" id="ab2-r2l"   style="background:#ff7043;width:0%"></div></div><span class="atk-num" id="an2-r2l">0</span></div>
+    <div class="atk-row"><span class="atk-lbl" style="color:#e91e8c">U2R</span>  <div class="atk-track"><div class="atk-fill" id="ab2-u2r"   style="background:#e91e8c;width:0%"></div></div><span class="atk-num" id="an2-u2r">0</span></div>
+  </div>
+  <div class="stat-card">
+    <h3>Filter Alerts</h3>
+    <div class="chips">
+      <span class="chip ch-all on" onclick="setFilter('ALL')">ALL</span>
+      <span class="chip ch-dos"    onclick="setFilter('DoS')">DoS</span>
+      <span class="chip ch-probe"  onclick="setFilter('Probe')">Probe</span>
+      <span class="chip ch-r2l"    onclick="setFilter('R2L')">R2L</span>
+      <span class="chip ch-u2r"    onclick="setFilter('U2R')">U2R</span>
+      <span class="chip ch-normal" onclick="setFilter('Normal')">Normal</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <h3>Model Performance</h3>
+    <div id="sb-perf2"></div>
+  </div>
 </div>
 
 <script>
+// ── Responsive setup ──────────────────────────────────────────────────────────
+const mobile = () => window.innerWidth <= 640;
+function setupLayout(){
+  const bnavEl = document.getElementById('bnav');
+  const bnavH  = mobile() ? 52 : 0;
+  bnavEl.style.display = mobile() ? 'flex' : 'none';
+  document.querySelectorAll('.page').forEach(p => {
+    p.style.bottom = bnavH + 'px';
+  });
+  document.querySelector('.nav-tabs').style.display = mobile() ? 'none' : 'flex';
+}
+setupLayout();
+window.addEventListener('resize', setupLayout);
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let rows=[], counters={DoS:0,Probe:0,R2L:0,U2R:0,Normal:0};
 let total=0, atks=0, correct=0, paused=false, ready=false;
 let model='DT', filter='ALL', upSecs=0, ppsWin=0, prevPPS=0, tickN=0;
 let metricsData=null, analyticsLoaded=false;
-const isMobile=()=>window.innerWidth<=640;
 const $=id=>document.getElementById(id);
 const ts=()=>{const d=new Date();return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0')};
+const bc=t=>({Normal:'b-normal',DoS:'b-dos',Probe:'b-probe',R2L:'b-r2l',U2R:'b-u2r'}[t]||'b-normal');
+const cc=(c,t)=>t==='Normal'?'#00c9a7':c>=85?'#2196f3':c>=65?'#ff9800':'#f44336';
 
-// badge class
-function bc(t){return {Normal:'b-normal',DoS:'b-dos',Probe:'b-probe',R2L:'b-r2l',U2R:'b-u2r'}[t]||'b-normal'}
-function cc(c,t){if(t==='Normal') return 'var(--normal)';return c>=85?'var(--blue)':c>=65?'var(--warn)':'var(--danger)'}
-
-// ── Page nav ──────────────────────────────────────────────────────────────────
-function showPage(name, btnEl, bnId){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+// ── Navigation ────────────────────────────────────────────────────────────────
+let currentPage = 'live';
+function go(name, tabEl, bnId){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
   $('page-'+name).classList.add('on');
-  // desktop nav tabs
+  currentPage = name;
+  // desktop tabs
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
-  if(btnEl) btnEl.classList.add('on');
+  if(tabEl) tabEl.classList.add('on');
+  else {
+    // sync desktop tab highlight when triggered from bottom nav
+    const tabMap = {live:0, analytics:1};
+    const tabs = document.querySelectorAll('.ntab');
+    if(tabMap[name]!==undefined) tabs[tabMap[name]].classList.add('on');
+  }
   // bottom nav
   document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));
   const bnMap={live:'bn-live',stats:'bn-stats',analytics:'bn-analytics'};
   if($(bnMap[name])) $(bnMap[name]).classList.add('on');
-  if(name==='analytics'&&ready&&!analyticsLoaded) loadAnalytics();
+  if(name==='analytics' && ready && !analyticsLoaded) loadAnalytics();
 }
+// init first page
+go('live', document.querySelector('.ntab'));
 
 // ── Training poll ─────────────────────────────────────────────────────────────
 async function waitReady(){
@@ -547,7 +479,7 @@ async function waitReady(){
 }
 async function loadMetrics(){
   metricsData=await fetch('/api/metrics').then(x=>x.json());
-  updatePerfPanel();updateTopMetrics();
+  updatePerf();updateTopMetrics();
 }
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
@@ -557,8 +489,7 @@ async function feedTick(){
   const rec=await fetch(`/api/predict?model=${model}`).then(x=>x.json()).catch(()=>null);
   if(!rec||!rec.prediction) return;
   rec.ts=ts();
-  rows.unshift(rec);
-  if(rows.length>500) rows.length=500;
+  rows.unshift(rec);if(rows.length>500)rows.length=500;
   total++;ppsWin++;
   if(rec.prediction!=='Normal'){atks++;counters[rec.prediction]=(counters[rec.prediction]||0)+1;}
   else counters.Normal=(counters.Normal||0)+1;
@@ -567,50 +498,43 @@ async function feedTick(){
   if(tickN%5===0) updateStats();
   if(tickN%3===0) renderFeed();
 }
-
 setInterval(()=>{
   $('m-pps').textContent=ppsWin;
   const d=ppsWin-prevPPS;
-  $('m-pps-d').textContent=d>=0?`↑ +${d}`:`↓ ${d}`;
-  $('m-pps-d').style.color=d>0?'var(--danger)':'var(--normal)';
+  $('m-ppsd').textContent=d>=0?`↑ +${d}`:`↓ ${d}`;
+  $('m-ppsd').style.color=d>0?'#f44336':'#00c9a7';
   prevPPS=ppsWin;ppsWin=0;
 },1000);
 
 // ── Stats update ──────────────────────────────────────────────────────────────
 function updateStats(){
-  const tv=total.toLocaleString();
-  const av=atks.toLocaleString();
-  const nv=(counters.Normal||0).toLocaleString();
+  const tv=total.toLocaleString(),av=atks.toLocaleString(),nv=(counters.Normal||0).toLocaleString();
   const acc=metricsData?metricsData[model==='BOTH'?'DT':model].accuracy+'%':'—';
   const cor=total>0?Math.round(correct/total*100)+'%':'—';
-  // sidebar (desktop)
-  $('s-total').textContent=tv;$('s-atk').textContent=av;$('s-norm').textContent=nv;
-  $('s-acc').textContent=acc;$('s-corr').textContent=cor;
-  // stats page (mobile)
-  $('s2-total').textContent=tv;$('s2-atk').textContent=av;$('s2-norm').textContent=nv;
-  $('s2-acc').textContent=acc;$('s2-corr').textContent=cor;
-
+  ['s-total','s2-total'].forEach(id=>$(id)&&($(id).textContent=tv));
+  ['s-atk','s2-atk'].forEach(id=>$(id)&&($(id).textContent=av));
+  ['s-norm','s2-norm'].forEach(id=>$(id)&&($(id).textContent=nv));
+  ['s-acc','s2-acc'].forEach(id=>$(id)&&($(id).textContent=acc));
+  ['s-corr','s2-corr'].forEach(id=>$(id)&&($(id).textContent=cor));
   const maxA=Math.max(...['DoS','Probe','R2L','U2R'].map(k=>counters[k]||0),1);
   ['dos','probe','r2l','u2r'].forEach(k=>{
     const K=k==='dos'?'DoS':k.charAt(0).toUpperCase()+k.slice(1);
-    const c=counters[K]||0;
-    const pct=Math.round(c/maxA*100)+'%';
+    const c=counters[K]||0,pct=Math.round(c/maxA*100)+'%';
     $('ab-'+k).style.width=pct;$('an-'+k).textContent=c;
     if($('ab2-'+k)){$('ab2-'+k).style.width=pct;$('an2-'+k).textContent=c;}
   });
   $('m-alert').textContent=(total>0?Math.round(atks/total*100):0)+'%';
 }
-
-function updatePerfPanel(){
+function updatePerf(){
   if(!metricsData) return;
   const m=model==='BOTH'?'DT':model,d=metricsData[m];
-  const html=['Accuracy','Precision','Recall','F1'].map((k,i)=>{
+  const h=['Accuracy','Precision','Recall','F1'].map((k,i)=>{
     const v=[d.accuracy,d.precision,d.recall,d.f1][i];
     return `<div class="perf-row"><span class="perf-k">${k}</span><span class="perf-v">${v}%</span></div>
             <div class="mini-t"><div class="mini-f" style="width:${v}%"></div></div>`;
   }).join('');
-  $('sb-perf').innerHTML=html;
-  $('sb-perf2').innerHTML=html;
+  $('sb-perf').innerHTML=h;
+  if($('sb-perf2')) $('sb-perf2').innerHTML=h;
 }
 function updateTopMetrics(){
   if(!metricsData) return;
@@ -620,42 +544,35 @@ function updateTopMetrics(){
   $('m-rec').textContent=metricsData[m].recall+'%';
 }
 
-// ── Render feed (table on desktop, cards on mobile) ───────────────────────────
+// ── Render ────────────────────────────────────────────────────────────────────
 function renderFeed(){
   const q=$('search').value.toLowerCase();
-  const filtered=rows.filter(r=>{
+  const f=rows.filter(r=>{
     if(filter!=='ALL'&&r.prediction!==filter) return false;
     if(q&&!`${r.src_ip} ${r.dst_ip} ${r.prediction} ${r.service} ${r.protocol}`.toLowerCase().includes(q)) return false;
     return true;
   });
-  $('row-count').textContent=filtered.length.toLocaleString();
-
-  // Desktop table
-  $('tbody').innerHTML=filtered.slice(0,200).map(r=>`
+  $('row-count').textContent=f.length.toLocaleString();
+  $('tbody').innerHTML=f.slice(0,200).map(r=>`
     <tr>
-      <td class="mono">${r.ts}</td><td class="ip">${r.src_ip}</td>
-      <td class="ip">${r.dst_ip}</td><td class="mono">${r.protocol}</td>
-      <td>${r.service}</td><td class="mono">${r.src_bytes.toLocaleString()}</td>
+      <td class="mono">${r.ts}</td><td class="ip">${r.src_ip}</td><td class="ip">${r.dst_ip}</td>
+      <td class="mono">${r.protocol}</td><td>${r.service}</td>
+      <td class="mono">${r.src_bytes.toLocaleString()}</td>
       <td class="mono">${r.duration}s</td><td class="mono">${r.flag}</td>
       <td><span class="badge ${bc(r.prediction)}">${r.prediction}</span></td>
       <td><span class="badge ${bc(r.true_label)}">${r.true_label}</span></td>
-      <td class="mono" style="color:var(--muted)">${r.model}</td>
+      <td class="mono" style="color:#4d6478">${r.model}</td>
       <td><div class="cbar"><div class="cbar-t"><div class="cbar-f" style="width:${r.confidence}%;background:${cc(r.confidence,r.prediction)}"></div></div><span class="cbar-n">${r.confidence}%</span></div></td>
     </tr>`).join('');
-
-  // Mobile cards
-  $('cardfeed').innerHTML=filtered.slice(0,100).map(r=>`
+  $('cardfeed').innerHTML=f.slice(0,100).map(r=>`
     <div class="acard">
-      <div class="acard-top">
-        <span class="acard-time">${r.ts}</span>
-        <span class="badge ${bc(r.prediction)}">${r.prediction}</span>
-      </div>
+      <div class="acard-top"><span class="acard-time">${r.ts}</span><span class="badge ${bc(r.prediction)}">${r.prediction}</span></div>
       <div class="acard-ips">${r.src_ip} → ${r.dst_ip}</div>
       <div class="acard-meta">${r.protocol} · ${r.service} · ${r.src_bytes.toLocaleString()}B · ${r.flag}</div>
-      <div class="acard-conf">
+      <div class="acard-right">
         <span class="badge ${bc(r.true_label)}" style="font-size:8px">${r.true_label}</span>
         <div class="cbar"><div class="cbar-t"><div class="cbar-f" style="width:${r.confidence}%;background:${cc(r.confidence,r.prediction)}"></div></div><span class="cbar-n">${r.confidence}%</span></div>
-        <span style="font-family:var(--mono);font-size:8px;color:var(--muted)">${r.model}</span>
+        <span style="font-family:var(--mono);font-size:8px;color:#4d6478">${r.model}</span>
       </div>
     </div>`).join('');
 }
@@ -665,7 +582,7 @@ function setModel(m){
   model=m;
   ['DT','KNN','BOTH'].forEach(k=>$('mb-'+k.toLowerCase()).classList.toggle('on',k===m));
   $('st-model').textContent=m;
-  updatePerfPanel();updateTopMetrics();
+  updatePerf();updateTopMetrics();
 }
 function setFilter(f){
   filter=f;
@@ -676,22 +593,18 @@ function setFilter(f){
 }
 function togglePause(){
   paused=!paused;
-  $('pbtn').textContent=paused?'▶':'⏸';
+  $('pbtn').textContent=paused?'▶ RESUME':'⏸ PAUSE';
   $('pbtn').classList.toggle('paused',paused);
 }
-
-// ── Clock ─────────────────────────────────────────────────────────────────────
 setInterval(()=>{
   upSecs++;
   $('st-uptime').textContent=`${String(Math.floor(upSecs/60)).padStart(2,'0')}:${String(upSecs%60).padStart(2,'0')}`;
 },1000);
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
-const PT={
-  paper_bgcolor:'transparent',plot_bgcolor:'transparent',
+const PT={paper_bgcolor:'transparent',plot_bgcolor:'transparent',
   font:{family:"'IBM Plex Mono',monospace",color:'#4d6478',size:9},
-  colorway:['#2196f3','#00c9a7','#f44336','#ff9800','#9c6fe4']
-};
+  colorway:['#2196f3','#00c9a7','#f44336','#ff9800','#9c6fe4']};
 async function loadAnalytics(){
   analyticsLoaded=true;
   const [cmDT,cmKNN,comp,feats]=await Promise.all([
@@ -700,24 +613,23 @@ async function loadAnalytics(){
     fetch('/api/chart/comparison').then(x=>x.json()),
     fetch('/api/chart/features').then(x=>x.json()),
   ]);
-  const cml={...PT,margin:{t:8,r:6,b:50,l:56},
+  const cml={...PT,margin:{t:8,r:6,b:50,l:54},
     xaxis:{tickfont:{size:8},title:{text:'Predicted',font:{size:8}}},
     yaxis:{tickfont:{size:8},title:{text:'Actual',font:{size:8}},autorange:'reversed'}};
   Plotly.newPlot('ch-cm-dt',[{type:'heatmap',z:cmDT.z,x:cmDT.x,y:cmDT.y,
-    colorscale:[[0,'#0c1018'],[0.3,'#0d3a6e'],[1,'#00c9a7']],
+    colorscale:[[0,'#0c1018'],[.3,'#0d3a6e'],[1,'#00c9a7']],
     text:cmDT.z.map(r=>r.map(v=>String(v))),texttemplate:'%{text}',
     textfont:{size:10,color:'#dce8f0'},showscale:false}],cml,{responsive:true,displayModeBar:false});
   Plotly.newPlot('ch-cm-knn',[{type:'heatmap',z:cmKNN.z,x:cmKNN.x,y:cmKNN.y,
-    colorscale:[[0,'#0c1018'],[0.3,'#0d3a6e'],[1,'#2196f3']],
+    colorscale:[[0,'#0c1018'],[.3,'#0d3a6e'],[1,'#2196f3']],
     text:cmKNN.z.map(r=>r.map(v=>String(v))),texttemplate:'%{text}',
     textfont:{size:10,color:'#dce8f0'},showscale:false}],cml,{responsive:true,displayModeBar:false});
   Plotly.newPlot('ch-compare',[
-    {name:'DT',type:'bar',x:comp.metrics,y:comp.DT,marker:{color:'rgba(0,201,167,0.8)'}},
-    {name:'KNN',type:'bar',x:comp.metrics,y:comp.KNN,marker:{color:'rgba(33,150,243,0.8)'}}
+    {name:'DT', type:'bar',x:comp.metrics,y:comp.DT, marker:{color:'rgba(0,201,167,.8)'}},
+    {name:'KNN',type:'bar',x:comp.metrics,y:comp.KNN,marker:{color:'rgba(33,150,243,.8)'}}
   ],{...PT,barmode:'group',margin:{t:10,r:6,b:40,l:40},
-    yaxis:{range:[85,100],tickfont:{size:8},gridcolor:'#1a2535',gridwidth:0.5},
-    xaxis:{tickfont:{size:9}},
-    legend:{font:{size:8},bgcolor:'transparent',orientation:'h',x:0,y:1.18}
+    yaxis:{range:[85,100],tickfont:{size:8},gridcolor:'#1a2535',gridwidth:.5},
+    xaxis:{tickfont:{size:9}},legend:{font:{size:8},bgcolor:'transparent',orientation:'h',x:0,y:1.15}
   },{responsive:true,displayModeBar:false});
   Plotly.newPlot('ch-features',[{type:'bar',orientation:'h',
     x:feats.scores.slice().reverse(),y:feats.features.slice().reverse(),
@@ -729,23 +641,24 @@ async function loadAnalytics(){
     yaxis:{tickfont:{size:7}}},{responsive:true,displayModeBar:false});
   if(metricsData){
     const cls=['Normal','DoS','Probe','R2L','U2R'];
-    $('ch-perclass').innerHTML=`<table class="pct">
-      <thead><tr><th>Class</th>
-        <th colspan="3" style="text-align:center;border-left:1px solid var(--border)">DT</th>
-        <th colspan="3" style="text-align:center;border-left:1px solid var(--border)">KNN</th>
-        <th style="border-left:1px solid var(--border)">N</th></tr>
+    $('ch-perclass').innerHTML=`<table class="pct"><thead>
+      <tr><th>Class</th>
+        <th colspan="3" style="text-align:center;border-left:1px solid #1a2535">Decision Tree</th>
+        <th colspan="3" style="text-align:center;border-left:1px solid #1a2535">KNN</th>
+        <th style="border-left:1px solid #1a2535">N</th></tr>
       <tr><th></th>
-        <th style="border-left:1px solid var(--border)">P</th><th>R</th><th>F1</th>
-        <th style="border-left:1px solid var(--border)">P</th><th>R</th><th>F1</th>
-        <th style="border-left:1px solid var(--border)"></th></tr></thead>
-      <tbody>${cls.map(c=>{
+        <th style="border-left:1px solid #1a2535">Prec</th><th>Rec</th><th>F1</th>
+        <th style="border-left:1px solid #1a2535">Prec</th><th>Rec</th><th>F1</th>
+        <th style="border-left:1px solid #1a2535"></th></tr>
+      </thead><tbody>
+      ${cls.map(c=>{
         const dt=metricsData.DT.per_class[c]||{},knn=metricsData.KNN.per_class[c]||{};
         return `<tr><td><span class="badge ${bc(c)}">${c}</span></td>
-          <td style="border-left:1px solid var(--border)">${dt.precision||0}%</td>
+          <td style="border-left:1px solid #1a2535">${dt.precision||0}%</td>
           <td>${dt.recall||0}%</td><td>${dt.f1||0}%</td>
-          <td style="border-left:1px solid var(--border)">${knn.precision||0}%</td>
+          <td style="border-left:1px solid #1a2535">${knn.precision||0}%</td>
           <td>${knn.recall||0}%</td><td>${knn.f1||0}%</td>
-          <td style="border-left:1px solid var(--border);color:var(--muted)">${dt.support||0}</td></tr>`;
+          <td style="border-left:1px solid #1a2535;color:#4d6478">${dt.support||0}</td></tr>`;
       }).join('')}</tbody></table>`;
   }
 }
