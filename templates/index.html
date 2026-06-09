@@ -182,12 +182,17 @@ td.ip{font-family:var(--mono);font-size:10px;color:var(--blue)}
 /* mobile cards */
 .card-feed{display:none}
 @media(max-width:640px){.card-feed{display:block}}
-.acard{padding:10px 14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:3px 8px}
-.acard-top{grid-column:1/-1;display:flex;align-items:center;gap:6px}
+.acard{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
+.acard-row1{display:flex;align-items:center;justify-content:space-between}
 .acard-time{font-family:var(--mono);font-size:10px;color:var(--muted)}
-.acard-ips{font-family:var(--mono);font-size:10px;color:var(--blue);overflow:hidden;text-overflow:ellipsis}
-.acard-meta{font-size:10px;color:var(--muted)}
-.acard-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;grid-row:2/4}
+.acard-badges{display:flex;gap:5px;align-items:center}
+.acard-ips{font-family:var(--mono);font-size:11px;color:#2196f3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acard-meta{display:flex;flex-wrap:wrap;gap:4px}
+.acard-pill{font-family:var(--mono);font-size:9px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:2px 7px;white-space:nowrap}
+.acard-conf{display:flex;align-items:center;gap:8px}
+.acard-ctrack{flex:1;height:3px;background:var(--dim);border-radius:2px;overflow:hidden}
+.acard-cfill{height:100%;border-radius:2px}
+.acard-cpct{font-family:var(--mono);font-size:9px;color:var(--muted);width:32px;text-align:right}
 
 /* status bar */
 .sbar{flex-shrink:0;padding:4px 12px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:12px}
@@ -567,13 +572,24 @@ function renderFeed(){
     </tr>`).join('');
   $('cardfeed').innerHTML=f.slice(0,100).map(r=>`
     <div class="acard">
-      <div class="acard-top"><span class="acard-time">${r.ts}</span><span class="badge ${bc(r.prediction)}">${r.prediction}</span></div>
-      <div class="acard-ips">${r.src_ip} → ${r.dst_ip}</div>
-      <div class="acard-meta">${r.protocol} · ${r.service} · ${r.src_bytes.toLocaleString()}B · ${r.flag}</div>
-      <div class="acard-right">
-        <span class="badge ${bc(r.true_label)}" style="font-size:8px">${r.true_label}</span>
-        <div class="cbar"><div class="cbar-t"><div class="cbar-f" style="width:${r.confidence}%;background:${cc(r.confidence,r.prediction)}"></div></div><span class="cbar-n">${r.confidence}%</span></div>
-        <span style="font-family:var(--mono);font-size:8px;color:#4d6478">${r.model}</span>
+      <div class="acard-row1">
+        <span class="acard-time">${r.ts}</span>
+        <div class="acard-badges">
+          <span class="badge ${bc(r.prediction)}">${r.prediction}</span>
+          <span class="badge ${bc(r.true_label)}" style="opacity:.6">${r.true_label}</span>
+        </div>
+      </div>
+      <div class="acard-ips">${r.src_ip} &rarr; ${r.dst_ip}</div>
+      <div class="acard-meta">
+        <span class="acard-pill">${r.protocol}</span>
+        <span class="acard-pill">${r.service}</span>
+        <span class="acard-pill">${r.src_bytes.toLocaleString()} B</span>
+        <span class="acard-pill">${r.flag}</span>
+        <span class="acard-pill" style="color:#4d6478">${r.model}</span>
+      </div>
+      <div class="acard-conf">
+        <div class="acard-ctrack"><div class="acard-cfill" style="width:${r.confidence}%;background:${cc(r.confidence,r.prediction)}"></div></div>
+        <span class="acard-cpct">${r.confidence}%</span>
       </div>
     </div>`).join('');
 }
