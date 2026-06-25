@@ -82,7 +82,7 @@ class IDSEngine:
 
         # KNN – fixed k=5 (representative of cross-val optimal for NSL-KDD)
         knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean',
-                                   algorithm='ball_tree', n_jobs=-1)
+                                   algorithm='ball_tree', n_jobs=1)
         knn.fit(X_tr, y_tr)
         self.knn_model = knn
 
