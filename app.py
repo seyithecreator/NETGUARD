@@ -4,7 +4,10 @@ Run:  python app.py
 """
 from flask import Flask, render_template, jsonify, request
 from ml_engine import engine
-import threading, time, random
+import threading, time, random, logging, traceback
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -13,9 +16,13 @@ training_status = {'done': False, 'error': None}
 
 def train_background():
     try:
+        log.info("Training started…")
         engine.train()
         training_status['done'] = True
+        log.info("Training complete.")
     except Exception as e:
+        err = traceback.format_exc()
+        log.error("Training failed:\n%s", err)
         training_status['error'] = str(e)
 
 t = threading.Thread(target=train_background, daemon=True)
