@@ -25,8 +25,12 @@ def train_background():
         log.error("Training failed:\n%s", err)
         training_status['error'] = str(e)
 
-t = threading.Thread(target=train_background, daemon=True)
-t.start()
+if engine.trained:
+    training_status['done'] = True
+    log.info("Model loaded from disk — ready immediately.")
+else:
+    t = threading.Thread(target=train_background, daemon=True)
+    t.start()
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route('/')

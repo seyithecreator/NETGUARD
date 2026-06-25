@@ -100,6 +100,16 @@ class IDSEngine:
         self.trained = True
         return self.results
 
+    def save(self):
+        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+        with open(MODEL_PATH, 'wb') as f:
+            pickle.dump(self, f)
+
+    @classmethod
+    def load(cls):
+        with open(MODEL_PATH, 'rb') as f:
+            return pickle.load(f)
+
     def _eval(self, model, X, y, name):
         y_pred = model.predict(X)
         cm     = confusion_matrix(y, y_pred, labels=[0,1,2,3,4])
@@ -199,5 +209,8 @@ class IDSEngine:
         return {'metrics': metrics, 'DT': dt_vals, 'KNN': knn_vals}
 
 
-# Singleton
-engine = IDSEngine()
+# Singleton — load from disk if available, otherwise start fresh
+try:
+    engine = IDSEngine.load()
+except Exception:
+    engine = IDSEngine()
