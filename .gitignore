@@ -10,8 +10,7 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Trained model files (large, regenerated on startup)
-models/*.pkl
+# models/*.pkl — committed so Render loads instantly without retraining
 
 # Data (optional - if file is large, exclude it)
 # data/nslkdd.csv
